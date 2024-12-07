@@ -1,0 +1,205 @@
+Autonomous drones are an emerging field in both civilian and military sectors. The investment in Zipline, DJI, and other similar companies, show that there is a lucrative market for urban autonomous drone applications such as same-day drone delivery, automated infrastructure inspection, and programmable aerial surveillance~\cite{GrandviewResearchDroneMarket,ForbesZiplineEvaluation}. The rise of companies like Anduril and recent geopolitical events like the War in Ukraine also hint at the wider role that autonomous drones will play in future armed conflicts~\cite{CNBC,CFAS}.
+
+Even with this demand, the quest to make smaller, lightweight autonomous drones is ongoing. Weight scales closely with the capability of onboard compute, and artificial intelligence algorithms used for drone perception continue to require more computation to run. This makes the prospect of creating a drone system with real-time access to such algorithms challenging.
+
+In this chapter, I provide background on current autonomous drone platforms and outline how some of the obstacles impeding their practical deployment can be overcome. In Section \ref{sec:history-drone-development}, I briefly describe the history of drone development and regulation along with the different categories of modern drones. I also explain the various problems holding these systems back from widespread adoption. In Section \ref{sec:prior-work}, I discuss prior research that has attempted to solve these problems, and its limitations. In Section \ref{sec:better-autonomous-drones}, I propose a possible solution by leveraging the benefits of edge computing and COTS hardware. I show how the advantages of this approach could make autonomous drone deployment in urban environments a reality.
+
+\section{The Development of Modern Drones}
+\label{sec:history-drone-development}
+
+Research into drone technology started in the early 1900s when during the interwar period, British engineers created a radio controlled plane, nicknamed the ``Queen Bee'', to train their anti-aircraft gunnery~\cite{IWMDrone}. The Queen Bee's name would spawn the colloquial ``drone'' moniker when referring to radio-controlled aircraft, a reference to worker drones in bee colonies. Over the next several decades, militaries around the world began incorporating drones into their arsenals; first, as pilotless training targets but later, as remotely operated observation and strike aircraft. By the 1990s, drones had become very sophisticated, equipped with multiple onboard sensors which enabled these platforms to conduct aerial reconnaissance at great distances~\cite{GlobalHawk}. However, despite these advances, one core design tenet remained unchanged: drones were always controlled by a human pilot and had limited ability to function on their own.
+
+\begin{figure}%
+    \centering
+    \subfloat[\centering The British-made "Queen Bee", introduced in 1935, was one of the first radio operated aircraft and served as an anti-aircraft practice target~\cite{IWMDrone}.]{{\includegraphics[width=7cm, height=5cm]{chapter2/FIGS/qbee2.jpg}}}%
+    \qquad
+\subfloat[\centering The RQ-4 Global Hawk, introduced in 1998, is a currently operated US Air Force reconnaissance drone with a range of over 14,000 miles~\cite{GlobalHawk}.]{{\includegraphics[width=7cm, height=5cm]{chapter2/FIGS/globalhawkdrone.jpg} }}%
+
+    \subfloat[\centering The Skydio 2, released in 2019, provides a small set of semi- and fully-autonomous capabilities like person tracking and obstacle avoidance~\cite{Skydio2}.]{{\includegraphics[width=7cm, height=5cm]{chapter2/FIGS/skydio-2.png} }}%
+    \qquad
+    \subfloat[\centering The DJI Matrice 600, released in 2016, is a fully-programmable autonomous drone with support for native onboard GPUs. Its huge size limits practical deployment~\cite{DJIMatrice}.]{{\includegraphics[width=7cm, height=5cm]{chapter2/FIGS/matrice600-2.png} }}%
+    \caption{Evolution of Drone Technology}%
+    \label{fig:20th-century-drones}%
+\end{figure}
+
+In the mid 2010s, drone technology started to shift away from exclusive manual piloting. The release of commercial autopilots like Pixhawk4 and Ardupilot enabled the rise of miniaturized (under 2~kg) multirotor drones which could perform limited autonomous flight such as following preset GPS waypoints~\cite{Pixhawk,Ardupilot}. Later, this was extended to semi-autonomous visual tracking and autonomous obstacle avoidance in quadrotor offerings like the DJI Phantom 4 and the Skydio 2~\cite{DJIPhantom4,Skydio2}. At the same time, growing investment in commercial fully-autonomous drones yielded the first off-the-shelf products. The DJI Matrice series (around 1~kg) was the most prominent of these, and it offered fully-autonomous capabilities using an onboard embedded computer, the DJI Manifold~\cite{DJIMatrice}.
+
+While the drone space is diverse in both aircraft size and type, this thesis will focus on quadrotor drones. Quadrotors are by far the most common drone type and have a number of advantages over fixed-wings and helicopters. Namely, they are affordable, easy to use, and are very stable in flight. These make them perfect for tasks involving aerial imagery analysis which are the main focus of this thesis. For the rest of this document, all mention of ``drones'' will refer to quadrotor aircraft.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{chapter2/FIGS/anatomy.png}
+    \begin{captext}
+    \small \\ The main components of a modern consumer drone: \\\textit{\textbf{1.} rotors, \textbf{2.} hot-swappable battery, \textbf{3.} autopilot, \textbf{4.} sensor module, \\ \textbf{5.} companion computer, \textbf{6.} stereo cameras, \textbf{7.} gimbal camera.}
+    \end{captext}
+    \caption{Quadrotor Drone Anatomy}
+    \label{fig:drone-anatomy}
+\end{figure}
+
+\subsection{Anatomy of a Drone}
+Modern quadrotor drones are made up of several key components. Broadly, these accomplish one of four tasks: \textit{low-level flight control, high-level flight control, power, and sensing}. Figure~\ref{fig:drone-anatomy} uses the DJI Mini 4 Pro~\cite{DJIMini4}, a popular consumer drone, to illustrate these components:
+
+\begin{enumerate}
+    \item \textbf{Rotors} (low-level flight control): provide lift to the aircraft. Opposing pairs counter-rotate to provide stability~\cite{Allain2017}. Rotors are coordinated by the electronic speed controller (ESC), a micro-controller connected to the \textit{Autopilot} module~\cite{Nagel2023}.
+    \item \textbf{Battery} (power): delivers power to all components. In many consumer drones, like the DJI Mini 4 Pro, the battery is a separate part which can be easily swapped out in the field.
+    \item \textbf{Autopilot} (low-level flight control): works with the ESC to execute flight maneuvers. Uses telemetry from the \textit{Sensor Module} to compensate against the wind and maintain a stable hovering position. Acts as a software abstraction layer over all drone sensors and hardware. Also manages the radio connection to the pilot.
+    \item \textbf{Sensor Module} (sensing): provides information about the drone's position and orientation, also known as telemetry. Usually made up of a GPS antenna, an inertial measurement unit (IMU)~\cite{IMU}, an altimeter, and a compass.
+    \item \textbf{Companion Computer} (high-level flight control): responsible for high-level autonomous decision-making. Runs computer vision or sensor fusion algorithms then sends actuation commands to the \textit{Autopilot} based on the outputs.
+    \item \textbf{Stereo Cameras} (sensing): gives a real-time depth map of the drone's surroundings~\cite{Stereo}. This enables full 360-degree obstacle avoidance. Not a feature on all consumer drones but becoming increasingly common.
+    \item \textbf{Gimbal Camera} (sensing): the main camera through which the drone visually senses its surroundings. Able to pitch, yaw, or roll as commanded by the \textit{Autopilot}.
+\end{enumerate}
+In some cases, drones may be equipped with special equipment like LIDAR, time-of-flight sensors, RTK modules, and cellular modems. However, these are rare and are usually a feature of purpose-built aircraft for specific mission sets. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\linewidth]{chapter2/FIGS/bvlos.jpg}
+    \caption{Types of Line-of-Sight Operation}
+    \label{fig:bvlos}
+\end{figure}
+
+\subsection{Regulation in Civilian Airspace}
+Drones like the DJI Mini 4 Pro and others are available globally for purchase, generally without the need for a license. This has led to a rapid dissemination of drones to consumers across the world and has spurred government regulators into action. This regulation serves one major purpose: to prevent potential damage to people or property due to in-flight emergencies. In the United States, the Federal Aviation Administration (FAA) introduced the Part 107 regulation in 2016~\cite{Flexairco}. This explicitly outlined the classes of UAVs allowed to fly over people, citing that only aircraft under 0.55~lbs or 250~g enjoyed near-unconditional approval~\cite{FAA2021}. In Europe, the European Union Aviation Safety Agency (EASA) has introduced similar regulation, only permitting flights over uninvolved pedestrians for drones under 250~g~\cite{EASA}. Flights over assemblies of people are not allowed for any weight class. In other countries, drones under 250~g are not regulated at all~\cite{IndiaRegulation,ChinaRegulation}.
+
+In addition to weight regulation for flights over people, most countries also have restrictions on beyond visual line-of-sight (BVLOS) operation of heavy drones. BVLOS operation is defined as flying outside the visual range of the pilot (referred to as the RPIC, or remote pilot-in-command by the FAA) and outside the visual range of an observer within radio contact with the RPIC~\cite{BVLOS}. Figure~\ref{fig:bvlos} shows the different classes of line-of-sight operations.
+
+\subsection{The Current Drone Market}
+\label{sec:current-market}
+As a result of both regulation and consumer demand, the current drone market is segmented into three loose categories: fully-autonomous, semi-autonomous, and manually piloted drones. Each of these inhabits a different weight and mission class, and are designed to operate in different regulatory environments. Table~\ref{tab:drone-apps} exhibits the main applications that drones are designed for. Generally, depending on regulation in the mission area, either a semi-autonomous (heavily-regulated) or fully-autonomous (lightly-regulated) drone will be used. 
+
+\begin{enumerate}
+    \item \textbf{Manually-Piloted Drones}: Manually-piloted drones are designed for hobbyist consumers, usually for the purpose of drone racing or recreational RC flight. They have no onboard compute, are not programmable, and must be manually piloted at all times to function. An example of a manually-piloted drone is the iFlight Cidora. This class of drone is extremely lightweight and very affordable compared to both semi- and fully-autonomous drones. The iFlight Cidora weighs 115~g and costs \$295 per unit~\cite{Cidora}. Most manually-piloted drones are so light that they avoid regulation.
+    \\
+    \item \textbf{Semi-Autonomous Drones}: Semi-autonomous drones have limited onboard compute and cannot perform active vision tasks without a human in the loop. They are typically equipped with a commercial autopilot like Pixhawk4 which enables autonomous following of GPS waypoints and automatic stabilization. They are not intended to operate BVLOS and often require a constant link to the RPIC (remote pilot in command). An example of a semi-autonomous drone is the Parrot Anafi. It is programmable and has no onboard compute, but can follow GPS waypoints and perform limited visual tracking by offloading to the RPIC's controller. This class of drone is lightweight and affordable compared to fully-autonomous drones, and can usually be flown in dense urban environments with minimal regulatory hurdles. The Parrot Anafi weighs 320~g and costs \$470 per unit~\cite{ParrotAnafi}.
+    \\
+    \item \textbf{Fully-Autonomous Drones}: Fully-autonomous drones have significant compute resources onboard and are able to analyze their own sensor streams in real time. They can perform active vision tasks without human assistance and can operate BVLOS. They also are fully-programmable, often outfitted with an onboard computer and flight control API. An example of a fully-autonomous drone is the DJI Matrice series. This class of drone is typically heavy and expensive. The Matrice 300 RTK, for instance, is over 3.5~kg and over \$10,000 per unit~\cite{Matrice300RTK}. Because of their size and weight, fully-autonomous drones are generally limited to use in rural areas away from people or property.
+    \\
+\end{enumerate}
+In reality, most drones share traits from all three of these categories, and seldom fit into one cleanly. This motivates viewing the drone space as a ``spectrum of autonomy'', from least (manually-piloted) to most (fully-autonomous). Figure~\ref{fig:spectrum} shows the capabilities of several popular drones and where they would lie on this theoretical spectrum.
+
+
+\begin{table}
+    \centering
+    \rowcolors{2}{gray!10}{white}
+    \begin{tabularx}{\textwidth}{| m{2.8cm} | m{12.5cm} |}
+        \hline
+        \centering \makecell{Precision\\Agriculture} & 
+        \small Drones are very useful for precision agriculture, with uses in monitoring, planting, irrigation, and pollination. They are easily scalable for large crop fields and can cover more area than ground-based solutions~\cite{Croptracker}. Most drone agriculture solutions use heavy, fully-autonomous platforms since rural areas have less strict regulation. \\[0.1cm]
+        \hline
+        \centering\makecell{Search and\\Rescue} & 
+        \small Aerial vehicles have historically been a vital component in search and rescue. Drones fit nicely into this role, allowing search and rescue teams to scan an area at a much lower altitude than they could with traditional aircraft. They have seen real world use in the wake of the 2010 Haiti earthquake and other natural disasters~\cite{SARDrone}. \\[0.1cm]
+        \hline
+        \centering\makecell{Package\\Delivery} &
+        \small For many years, drones have been touted as the future of last mile package delivery. This is because they can operate with higher cost-efficiency for small size items and can reach areas that are not well-connected by traditional infrastructure~\cite{PackageDrone}. Amazon has invested heavily in Prime Air, a drone-based extension to its popular Prime delivery service. However, this project has been sidelined by FAA regulation~\cite{Link2023}. Other companies like Zipline have had more success, using drones to make 1 million deliveries to remote areas~\cite{ForbesZiplineDeliveries}. \\[0.1cm]
+        \hline
+        \centering\makecell{Structure\\Inspection} &
+        \small Recently, drones have emerged as a useful tool for structure inspection. They are able to reach inaccessible sections of structures due to their small size and maneuverability. More importantly, they are much safer and efficient than a human inspector. In 2022, the U.S. Bureau of Labor Statistics estimated that 1 in every 5 construction workplace deaths was due to falls~\cite{ConstructionFalls}. Drones allow pilots to view unsafe areas with no personal risk. This has increased the frequency of building inspection checkups, ensuring prompt, safe maintenance on failing infrastructure~\cite{InfrastructureInspection}. \\[0.1cm]
+        \hline
+        \centering\makecell{Aerial\\Surveys} &
+        \small While aerial surveys and 3D scans have been conducted for decades, drones are a new, more cost effective tool for this task~\cite{AerialPhotography}. Their ability to provide a high resolution, bird's eye view of an area combined with their flight stability, make them ideal candidates for survey work. \\[0.1cm]
+        \hline
+        \centering\makecell{Police\\Work} &
+        \small Drones have seen an increasing role in law enforcement. Agencies use them for general surveillance, illegal activity monitoring, crime scene investigation, and many other mission sets~\cite{PoliceDrone}. Companies like Skydio and DJI focus many offerings on this market segment. \\[0.1cm]
+        \hline
+        \centering\makecell{Aerial\\Reconnaissance} &
+        \small Modern drones have revolutionized military aerial reconnaissance. Their small size allows them to be carried with a squad and deployed on-the-fly when necessary~\cite{StarsStripes}. The U.S. military has also invested in micro-scale platforms like the Teledyne Black Hornet that could conceivably be carried by every soldier~\cite{StarsStripes}. \\[0.1cm]
+        \hline
+        \centering\makecell{Suicide\\Aircraft} & 
+        \small Suicide drones have been one of the most impactful new weapons in the War in Ukraine. Both Russian and Ukrainian forces have used small quadcopters like the DJI Mavic 3 to deliver bomb payloads~\cite{BBCKamikaze}. These have been very effective against slow moving targets like tanks~\cite{FPKamikaze}. Some fear that this technology could lead to a new breed of terrorist attacks~\cite{Pledger2021}. \\[0.1cm]
+        \hline
+        \centering\makecell{Anti-Drone\\Defense} &
+        \small As the threat of drones has increased, the investment in drone defense systems has surged. Companies like Anduril have tackled this problem by using specialized drones to take down other hostile drones. Their Anvil kinetic interceptor destroys other UAVs by smashing into them at high speeds~\cite{Anvil}. \\[0.1cm]
+        \hline
+    \end{tabularx}
+    \caption{Drone Applications}
+    \label{tab:drone-apps}
+\end{table}
+
+\begin{figure}[]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|c|}
+        \hline
+           \rowcolor{lightgray!50}
+         \textbf{Drone} & \textbf{Autopilot} & \textbf{Avoidance} & \textbf{Tracking} & \textbf{Programmable} & \textbf{Compute} \\
+         \hline
+         iFlight Cidora & \cellcolor{green!20}None & \cellcolor{green!20}None & \cellcolor{green!20}None & \cellcolor{green!20}No & \cellcolor{green!20}None \\[0.1cm]
+         \hline
+         DJI Avata 2 & \cellcolor{orange!25}Yes & \cellcolor{yellow!20}Partial & \cellcolor{green!20}None & \cellcolor{green!20}No & \cellcolor{green!20}None \\[0.1cm]
+         \hline
+         Parrot Anafi & \cellcolor{orange!25}Yes & \cellcolor{green!20}None & \cellcolor{yellow!20}Assisted & \cellcolor{red!20}Yes & \cellcolor{green!20}None \\[0.1cm]
+         \hline
+         Skydio 2 & \cellcolor{orange!25}Yes & \cellcolor{orange!25}Yes & \cellcolor{yellow!20}Assisted & \cellcolor{yellow!20}Partially & \cellcolor{green!20}None \\[0.1cm]
+         \hline
+         DJI Mini 4 Pro & \cellcolor{orange!25}Yes & \cellcolor{orange!25}Yes & \cellcolor{yellow!20}Assisted & \cellcolor{yellow!20}Partially & \cellcolor{green!20}None \\[0.1cm]
+         \hline
+         Skydio 2 & \cellcolor{orange!25}Yes & \cellcolor{orange!25}Yes & \cellcolor{red!20}Yes & \cellcolor{yellow!20}Partially & \cellcolor{red!20}Yes \\[0.1cm]
+         \hline
+         DJI Matrice 300 RTK & \cellcolor{orange!25}Yes & \cellcolor{orange!25}Yes & \cellcolor{red!20}Yes & \cellcolor{red!20}Yes & \cellcolor{red!20}Yes \\[0.1cm]
+         \hline
+    \end{tabular}
+    \\[0.2cm]
+    \begin{captext}
+        \small Capabilities are colored according to whether they are typically associated with manually-piloted (green), semi-autonomous (yellow), both semi- and fully-autonomous (orange),  or fully-autonomous (red) drones. Assisted tracking means that a human pilot must help the drone in order for it to function properly.
+    \end{captext}
+    \centering
+    \includegraphics[width=1.0\linewidth]{chapter2/FIGS/spectrum.png}
+    \begin{captext}
+        \small Based on the capability set of each drone, I have roughly placed them on the theoretical spectrum of autonomy. This is an entirely subjective categorization. Others may differ on how to define each category and which drones belong in them.
+    \end{captext}
+    \caption{The ``Spectrum of Autonomy''}
+    \label{fig:spectrum}
+\end{figure}
+
+\subsection{What is Holding Drones Back?}
+\label{sec:problems}
+As presented by Table~\ref{tab:drone-apps}, there are many applications where drones have been useful. However, it is my belief that they still have not lived up to their true potential. Many of the listed tasks, such as aerial surveys, building inspection, and police surveillance, are still done using full manual or human-assisted control in densely populated areas. Yet, many if not all of these tasks could benefit greatly from full-autonomy, especially in or around cities. Surveys or inspection flights could be performed daily, without human supervision, with an auto-generated report sent out for engineers to look over. This could greatly reduce costs and prevent critical infrastructure failures, potentially saving lives~\cite{Dorafshan2018}. Automated police surveillance could free up officers, reduce training overhead, and provide round-the-clock monitoring without any risk of fatigue. So why have fully-autonomous platforms failed to see widespread use in these urban applications, when they have been used with great success elsewhere?
+
+The answer is complicated, but I believe that there are five clear problems facing fully-autonomous drones in dense urban settings: \\[0.1]
+\begin{enumerate}
+    \item \textbf{Weight}: fully-autonomous aircraft are heavy, as discussed in Section~\ref{sec:current-market}. This is because they require onboard compute like GPUs to operate which drive up weight. This directly clashes with most international drone regulation which becomes progressively more restrictive over 250~g. \\[0.1]
+    \item \textbf{Usability}: the majority drone users have limited or non-existent programming experience. Unfortunately, most commercial fully-autonomous offerings today demand skilled programmers to operate efficiently and safely. This makes it daunting for inexperienced users to adopt a fully-autonomous platform. \\[0.1]
+    \item \textbf{Versatility}: there is a major trade-off in current fully-autonomous drone products between weight and versatility. Heavy platforms which carry generalized compute hardware like CPUs and GPUs are versatile since they can run most kinds of software natively. On the other hand, lightweight platforms cannot carry generalized compute due to weight constraints, and thus usually carry specialized compute for only one or two mission types. \\[0.1]
+    \item \textbf{Portability}: drone manufacturers have their own, tightly integrated software stack that does not work with other drone models. This all or nothing approach means that a consumer must stick within the hardware ecosystem or be forced to buy an entirely new fleet of drones. \\[0.1]
+    \item \textbf{Cost}: fully-autonomous drones typically cost around ten times the cost of comparable semi-autonomous drones. This makes them much less economical to deploy at scale. 
+    \\[0.1]
+\end{enumerate}
+At the time of writing this thesis, no commercial product has addressed all five of these concerns.
+
+
+\section{Prior Research}
+\label{sec:prior-work}
+In parallel to commercial efforts, autonomous drone research has surged in recent years. Real-time execution of active vision tasks has been a key driver. Schedl et al proposed an autonomous drone design for classification-driven adaptive search and rescue in densely forested environments~\cite{Schedl2021}. George et al demonstrated a drone inspection system which could localize the drone's camera view onto a 3D model of a target structure in real time~\cite{George2019}. Chen et al showed an efficient drone onboard computation model for visual object tracking~\cite{Chen2018}. Many other projects have explored similar applications in surveillance, wildlife monitoring, racing, and obstacle avoidance~\cite{Apvrille2014,Li2020,Devos2018,Alsalam2017,Ward2016}.  
+
+A growing number of researchers have identified some of the problems outlined in Section~\ref{sec:problems} (\textit{weight}, \textit{usability}, \textit{versatility}, \textit{portability}, and \textit{cost}) as important research areas. In this section, I will present projects that attempt to solve these problems. I will also discuss their limitations and why their solutions have not fully addressed the issues I outlined.
+
+\subsection{Weight}
+Since as early as 2009, the drone research community has recognized the importance of lightweight aircraft in real world applications~\cite{Burkle2011, Burkle2009}. Lightweight ($\leq 450$~g) autonomous drones have many benefits over their heavier counterparts: they are safer to operate, have simpler transportation logistics, and have a lower noise profile. It was theorized that achieving such lightweight autonomy would enable the vision of cooperative drone swarms~\cite{Floreano2015}. Since the mid 2010s, much work has focused on bringing high-level autonomy to small, lightweight drones. Schmid et al proposed a sub-1~kg aircraft design which could perform unassisted visual navigation~\cite{Schmid2014}. Palossi et al developed visual navigation and human pose estimation software which runs onboard 27~g drones~\cite{Palossi2019,Palossi2021}. M{\"u}ller et al demonstrated a depth-based obstacle avoidance system for 35~g drones~\cite{Muller2023}. Many of these projects suffer from similar issues of \textit{portability}. That is, they either use purpose-built aircraft or function on one type of aircraft. There is little ability to deploy these systems to different drone hardware, a serious drawback in an ever-changing drone landscape. 
+
+\subsection{Usability}
+\label{sec:development-platforms}
+For many years, drone research did not consider usability. Many projects used custom-built aircraft with no guidance on how to replicate the platform for other researchers. Others provided autonomous software which was only usable by experts, and thus could not be leveraged by average developers. These days, the drone research community has started to recognize the importance of usability. Beseda et al presented a mission-oriented control infrastructure for easily managing swarms of autonomous UAVs~\cite{Besada2019}. Mottola et al proposed a simple but expressive API for drone team control~\cite{Mottola2014}. Tilley et al developed a block programming language that could allow children to program autonomous drones~\cite{Tilley2017}. While this work is useful, these projects do not present a practical integration strategy with real consumer drones. There is no consideration of \textit{portability} or \textit{weight}, both very important for public deployment.
+
+\subsection{Versatility}
+Mission versatility is a feature that most heavy fully-autonomous drones already possess, since they carry generalized compute like CPUs and GPUs which can run GPLs (general-purpose programming languages) and inference deep neural networks with relatively low latency. However, achieving this versatility on lightweight drones is an enduring challenge. This is because miniaturizing generalized compute hardware is difficult, and weight-optimized compute hardware is inflexible~\cite{Hu2022}. Still, many have tried to modify lightweight onboard hardware to be able to run heavyweight computer vision. Albanese et al propose a neural accelerator modification to a Raspberry Pi which could be flown onboard small UAVs~\cite{Albanese2022}. Zhang et al demonstrate an FPGA architecture for drones that can inference neural networks with much lower power demand than GPUs~\cite{Zhang2022}.
+
+\begin{figure}
+    \centering
+    \subfloat[\centering Bitcraze Crazyflie\\(27~g)]
+    {\includegraphics[width=0.30\textwidth, height=1.5in]{chapter2/FIGS/crazyflie.jpg}}
+    \qquad
+    \subfloat[\centering Modal AI Starling\\(280~g)]
+    {\includegraphics[width=0.30\textwidth, height=1.75in]{chapter2/FIGS/starling-2.png}}
+    \caption{Consumer Drone Development Platforms}
+    \label{fig:drone-dev-platforms}
+\end{figure}
+
+\subsection{Portability}
+
+\subsection{Cost}
+
+\section{A Key Insight: the Onboard Compute Trade-off}
+\label{sec:better-autonomous-drones}
+The key factors of \textit{weight}, \textit{usability}, \textit{versatility}, \textit{portability}, and \textit{cost} all hinder autonomous drone development and deployment, yet no proposed system has solved all of these issues simultaneously. Central to this problem is the trade-off between heavy, generalized, onboard compute that supports common programming ecosystems but exceeds regulatory limits, and lightweight, specialized, onboard compute that can only run tailor-made programs, but is light enough to fly within regulatory bounds. 
+
+
+
+

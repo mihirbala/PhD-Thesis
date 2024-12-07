@@ -1,0 +1,55 @@
+Unmanned aerial vehicles, commonly known as drones, are a disruptive technology that have recently seen widespread use. In civilian settings, they enable cheap and safe completion of tasks such as infrastructure inspection, agriculture monitoring, wildfire control, and police surveillance. In military settings, they are a vital tool for advance reconnaissance. For most use cases today, drones are deployed with a human pilot who is in constant control of the aircraft.
+
+In recent years, research efforts have pushed towards drones capable of fully-autonomous flight. The term \textit{fully-autonomous} flight is defined by the National Institute of Science and Technology (NIST) as “pre-programmed flight without a remote human pilot, including mission-specific actions in response to runtime observations”~\cite{Huang2008}. There are two main benefits to this approach. First, it decreases costs and frees human attention. Second, it allows the practical operation of drone swarms, large groups of aircraft that cooperatively execute tasks. Drone swarms in particular open the door to a vast possibility space of missions which could revolutionize several civilian and military sectors~\cite{Burkle2009}.
+
+Weight is a fundamental impediment to autonomous drone adoption. Greater intelligence correlates with more powerful (and hence heavier) on-board computing and richer sensing. An on-board GPU, for example, brings with it a long logistical tail: heatsinks, cooling fans, and larger batteries. Increased weight brings with it regulatory challenges for flights over civilian airspace. Since 2021, the FAA has pre-authorized flights over people and vehicles by drones with a total weight of less than 250~g~\cite{FAA2021}. Heavier drones require explicit FAA approval for such flights, conditional upon mitigation measures for collisions and free fall. Even above this limit, regulatory approval for autonomous BVLOS (beyond visual line of sight) flight in dense urban settings is easier to obtain for lighter drones than for heavier drones. This regulation has proven to be a major obstacle for several civilian projects. For instance, Amazon’s Prime Air service that uses 36~kg drones for package delivery has been sidelined by regulatory challenges related to weight and safety~\cite{Link2023}. In military settings, weight is also a crucial consideration. Heavy aircraft complicate logistics and often require dedicated transportation~\cite{DefensePost}. 
+
+Other major limitations to autonomous drone adoption are software portability, general usability, mission versatility, and unit cost. While there have been attempts to bring all drones under a unified programming ecosystem, it is still the norm for drone companies to develop their own SDKs for their platforms. This makes it difficult to port code written for one ecosystem to another which divides the development community. Existing fully-autonomous drones also require users to have low level knowledge to ensure safe operation, a serious barrier to usability. Many lack versatility, and cannot be configured to perform missions outside of a small, manufacturer specified set. Lastly, the unit cost for current autonomous drones is several times higher than manually piloted equivalents. Such prices limit accessibility and hurt the economic viability of swarm operations where individual aircraft losses are not only likely but expected.
+
+The core contribution of this thesis is \textit{SteelEagle}, a hardware-agnostic autonomous drone system which attempts to surmount these obstacles by leveraging edge computing and a new modular drone operating system. Edge computing enables a drone to offload compute-intensive real-time operations over a low-latency, high-bandwidth wireless network to a powerful ground-based server (cloudlet) which is usually located near a cell tower. This reduces the need for heavy on-board computing hardware. In parallel, the SteelEagle operating system is designed to be drone agnostic, developer friendly, and mission capable. Steel-Eagle focuses specifically on performing \textit{active vision} tasks. Active vision tasks are those which require the drone to respond in real time to changes in the scene, like tracking a moving target.
+
+A key consideration of this system is the use of commercial off-the-shelf (COTS) drones and computing / communication payloads. This approach avoids customization of hardware (e.g., drone modifications) and modification of privileged software (e.g., “rooting” a device) which lowers cost and greatly increases accessibility. It also avoids the need for re-certification (e.g., by the FAA or the FCC). However, a COTS approach also introduces new obstacles. Thermal limitations of lightweight COTS communications devices pose latency, frame rate, and quality challenges that render traditional sensor offloading techniques ineffective, and force such systems to intelligently manage communication, computation, and prediction.
+
+\section{Thesis Statement}
+In this thesis, I demonstrate SteelEagle as a capable alternative to existing autonomous drone systems, despite the inherent latency and bandwidth limitations of offloading. I show how it improves over other platforms in the following design categories:
+
+\begin{enumerate}
+\item \textbf{Weight}: the overall weight of the aircraft, including batteries and payload.
+\item \textbf{Usability}: the ease with which an inexperienced user can learn and use the system. 
+\item \textbf{Versatility}: the diversity of tasks which the system can execute.
+\item \textbf{Portability}: the ease with which the system can be ported to new hardware.
+\item \textbf{Cost}: the overall cost of the aircraft, including batteries and payload.
+\end{enumerate}
+\\
+In particular, I claim that:
+
+\textbf{It is feasible to construct an ultra-light flight platform for autonomous active vision tasks in beyond visual line-of-sight (BVLOS) settings that only uses commercial off-the-shelf (COTS) drones and COTS computing/communication payloads. The most serious obstacle to this goal, namely the weight of computing hardware necessary to achieve autonomy, can be overcome using edge computing. I posit that such a flight platform can match and in some cases exceed the performance of heavier autonomous drones on active vision tasks, despite bandwidth, latency and connectivity challenges.}
+
+\textit{Why is this thesis important?} If this statement were true, then such edge-enabled drones could see widespread adoption for BVLOS missions in urban environments. They would have lower operation costs and increased safety compared to traditional autonomous drones. Tasks such a structure inspection, police surveillance, and weather monitoring could directly benefit from this. Drone swarms over public infrastructure would become feasible.
+
+\textit{Why does it not follow trivially from what is already known?} Existing work in this space is limited since most current research focuses on improving drone capabilities rather than decreasing their weight. There are no commercial drones under the FAA threshold of 250~g that possess onboard intelligence capable of autonomously executing  missions. There are limited drones that are edge-enabled, but these drones are heavy (more than 500~g) and expensive (over \$3,000).
+There has been some academic research on using drones in conjunction with edge computing. However, these efforts focused on large, heavy drones which used onboard hardware in addition to supplemental edge offload. None identified weight as a dominant design consideration. SteelEagle, by contrast, is designed primarily around reducing weight without compromising capability. It is my belief that this is critical to drive large scale adoption of autonomous drones. 
+
+\begin{flushleft}
+The main contributions of this thesis are as follows:
+\end{flushleft}
+\begin{enumerate}
+\item I propose a fully-autonomous flight platform capable of executing active vision tasks on lightweight COTS drones using edge computing. I show why this platform is an improvement over prior work in terms of its \textit{weight}, \textit{usability}, \textit{versatility}, \textit{portability}, and \textit{cost}.
+\item I provide a measurement study quantifying this platform's performance using a novel benchmarking suite.
+\item I show how this platform can be extended to a heterogeneous drone swarm ecosystem.  
+\end{enumerate}
+
+ 
+
+\section{Thesis Overview}
+The remainder of this dissertation is organized as follows:
+\begin{itemize}
+    \item In Chapter 2, I provide background on the development history of autonomous drones and summarize related research in this area. I show how SteelEagle builds on this existing research.
+    \item In Chapter 3, I discuss how to connect lightweight COTS drones to the edge. I outline the design challenges and formulate a criteria for choosing an edge communication payload that flies with the drone.
+    \item In Chapter 4, I provide the overall design of SteelEagle including its advantages and disadvantages over current systems. I demonstrate a SteelEagle drone performing several autonomous tasks and provide some performance analysis.
+    \item In Chapter 5, I introduce a new edge communication payload that improves on the earlier prototype. I show how this new payload can reduce the OODA (Observe Orient Decide Act) loop of the system, and thus greatly increase autonomous performance.
+    \item In Chapter 6, I describe a holistic benchmark for measuring edge-based and fully-onboard autonomous drone performance on several key tasks. This benchmark stresses the OODA loop of the given test platform and is useful for understanding the impact of high latency and low throughput on edge offloading.
+    \item In Chapter 7, I deploy SteelEagle on new drone hardware to demonstrate drone hardware agnosticism. I illustrate how my system adapts to different hardware and how it can cope with disconnected operation.
+    \item Finally, in Chapter 8, I conclude the dissertation and explain future work with a summary of contributions.
+\end{itemize}
+
