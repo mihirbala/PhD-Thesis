@@ -131,7 +131,7 @@ In reality, most drones share traits from all three of these categories, and sel
          \hline
          DJI Mini 4 Pro & \cellcolor{orange!25}Yes & \cellcolor{orange!25}Yes & \cellcolor{yellow!20}Assisted & \cellcolor{yellow!20}Partially & \cellcolor{green!20}None \\[0.1cm]
          \hline
-         Skydio 2 & \cellcolor{orange!25}Yes & \cellcolor{orange!25}Yes & \cellcolor{red!20}Yes & \cellcolor{yellow!20}Partially & \cellcolor{red!20}Yes \\[0.1cm]
+         Skydio X10 & \cellcolor{orange!25}Yes & \cellcolor{orange!25}Yes & \cellcolor{red!20}Yes & \cellcolor{yellow!20}Partially & \cellcolor{red!20}Yes \\[0.1cm]
          \hline
          DJI Matrice 300 RTK & \cellcolor{orange!25}Yes & \cellcolor{orange!25}Yes & \cellcolor{red!20}Yes & \cellcolor{red!20}Yes & \cellcolor{red!20}Yes \\[0.1cm]
          \hline
@@ -154,51 +154,78 @@ In reality, most drones share traits from all three of these categories, and sel
 As presented by Table~\ref{tab:drone-apps}, there are many applications where drones have been useful. However, it is my belief that they still have not lived up to their true potential. Many of the listed tasks, such as aerial surveys, building inspection, and police surveillance, are still done using full manual or human-assisted control in densely populated areas. Yet, many if not all of these tasks could benefit greatly from full-autonomy, especially in or around cities. Surveys or inspection flights could be performed daily, without human supervision, with an auto-generated report sent out for engineers to look over. This could greatly reduce costs and prevent critical infrastructure failures, potentially saving lives~\cite{Dorafshan2018}. Automated police surveillance could free up officers, reduce training overhead, and provide round-the-clock monitoring without any risk of fatigue. So why have fully-autonomous platforms failed to see widespread use in these urban applications, when they have been used with great success elsewhere?
 
 The answer is complicated, but I believe that there are five clear problems facing fully-autonomous drones in dense urban settings: \\[0.1]
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Weight}: fully-autonomous aircraft are heavy, as discussed in Section~\ref{sec:current-market}. This is because they require onboard compute like GPUs to operate which drive up weight. This directly clashes with most international drone regulation which becomes progressively more restrictive over 250~g. \\[0.1]
-    \item \textbf{Usability}: the majority drone users have limited or non-existent programming experience. Unfortunately, most commercial fully-autonomous offerings today demand skilled programmers to operate efficiently and safely. This makes it daunting for inexperienced users to adopt a fully-autonomous platform. \\[0.1]
+    \item \textbf{Accessibility}: fully-autonomous drones, due to their size and weight, require experienced pilots to operate safely. They demand careful flight planning and program verification before flight, since a loss of aircraft could be hazardous to people and property. This restricts fully-autonomous drones to a small user-base. \\[0.1]
     \item \textbf{Versatility}: there is a major trade-off in current fully-autonomous drone products between weight and versatility. Heavy platforms which carry generalized compute hardware like CPUs and GPUs are versatile since they can run most kinds of software natively. On the other hand, lightweight platforms cannot carry generalized compute due to weight constraints, and thus usually carry specialized compute for only one or two mission types. \\[0.1]
-    \item \textbf{Portability}: drone manufacturers have their own, tightly integrated software stack that does not work with other drone models. This all or nothing approach means that a consumer must stick within the hardware ecosystem or be forced to buy an entirely new fleet of drones. \\[0.1]
+    \item \textbf{Portability}: drone manufacturers have their own, tightly integrated software stack that does not work with other drone models. This all-or-nothing approach means that a consumer must stick within the hardware ecosystem or be forced to buy an entirely new fleet of drones. \\[0.1]
     \item \textbf{Cost}: fully-autonomous drones typically cost around ten times the cost of comparable semi-autonomous drones. This makes them much less economical to deploy at scale. 
     \\[0.1]
-\end{enumerate}
-At the time of writing this thesis, no commercial product has addressed all five of these concerns.
-
+\end{itemize}
+If a commercial product were to solve these five challenges, it is my belief that autonomous drones would see widespread use, even in dense urban environments. However, at the time of writing this document, no such product exists.
 
 \section{Prior Research}
 \label{sec:prior-work}
 In parallel to commercial efforts, autonomous drone research has surged in recent years. Real-time execution of active vision tasks has been a key driver. Schedl et al proposed an autonomous drone design for classification-driven adaptive search and rescue in densely forested environments~\cite{Schedl2021}. George et al demonstrated a drone inspection system which could localize the drone's camera view onto a 3D model of a target structure in real time~\cite{George2019}. Chen et al showed an efficient drone onboard computation model for visual object tracking~\cite{Chen2018}. Many other projects have explored similar applications in surveillance, wildlife monitoring, racing, and obstacle avoidance~\cite{Apvrille2014,Li2020,Devos2018,Alsalam2017,Ward2016}.  
 
-A growing number of researchers have identified some of the problems outlined in Section~\ref{sec:problems} (\textit{weight}, \textit{usability}, \textit{versatility}, \textit{portability}, and \textit{cost}) as important research areas. In this section, I will present projects that attempt to solve these problems. I will also discuss their limitations and why their solutions have not fully addressed the issues I outlined.
+A growing number of researchers have identified some of the problems outlined in Section~\ref{sec:problems} (\textit{weight}, \textit{accessibility}, \textit{versatility}, \textit{portability}, and \textit{cost}) as important research areas. In this section, I will present projects that attempt to solve these problems. I will also discuss their limitations and why their solutions have not fully addressed the issues I outlined.
+
 
 \subsection{Weight}
-Since as early as 2009, the drone research community has recognized the importance of lightweight aircraft in real world applications~\cite{Burkle2011, Burkle2009}. Lightweight ($\leq 450$~g) autonomous drones have many benefits over their heavier counterparts: they are safer to operate, have simpler transportation logistics, and have a lower noise profile. It was theorized that achieving such lightweight autonomy would enable the vision of cooperative drone swarms~\cite{Floreano2015}. Since the mid 2010s, much work has focused on bringing high-level autonomy to small, lightweight drones. Schmid et al proposed a sub-1~kg aircraft design which could perform unassisted visual navigation~\cite{Schmid2014}. Palossi et al developed visual navigation and human pose estimation software which runs onboard 27~g drones~\cite{Palossi2019,Palossi2021}. M{\"u}ller et al demonstrated a depth-based obstacle avoidance system for 35~g drones~\cite{Muller2023}. Many of these projects suffer from similar issues of \textit{portability}. That is, they either use purpose-built aircraft or function on one type of aircraft. There is little ability to deploy these systems to different drone hardware, a serious drawback in an ever-changing drone landscape. 
+Since as early as 2009, the drone research community has recognized the importance of lightweight aircraft in real world applications~\cite{Burkle2011, Burkle2009}. Lightweight ($\leq 450$~g) autonomous drones have many benefits over their heavier counterparts: they are safer to operate, have simpler transportation logistics, and have a lower noise profile. It was theorized that achieving such lightweight autonomy would enable the vision of cooperative drone swarms~\cite{Floreano2015}. Since the mid 2010s, much work has focused on bringing high-level autonomy to small, lightweight drones. Schmid et al proposed a sub-1~kg aircraft design which could perform unassisted visual navigation~\cite{Schmid2014}. Palossi et al developed visual navigation and human pose estimation software which runs onboard 27~g drones~\cite{Palossi2019,Palossi2021}. M{\"u}ller et al demonstrated a depth-based obstacle avoidance system for 35~g drones~\cite{Muller2023}. Many of these projects suffer from similar issues of portability; they either use purpose-built aircraft or function on only one type of aircraft. There is little ability to deploy these systems to different drone hardware, a drawback in an ever-changing drone landscape. 
 
-\subsection{Usability}
+\subsection{Accessibility}
 \label{sec:development-platforms}
-For many years, drone research did not consider usability. Many projects used custom-built aircraft with no guidance on how to replicate the platform for other researchers. Others provided autonomous software which was only usable by experts, and thus could not be leveraged by average developers. These days, the drone research community has started to recognize the importance of usability. Beseda et al presented a mission-oriented control infrastructure for easily managing swarms of autonomous UAVs~\cite{Besada2019}. Mottola et al proposed a simple but expressive API for drone team control~\cite{Mottola2014}. Tilley et al developed a block programming language that could allow children to program autonomous drones~\cite{Tilley2017}. While this work is useful, these projects do not present a practical integration strategy with real consumer drones. There is no consideration of \textit{portability} or \textit{weight}, both very important for public deployment.
+In the current drone research space, accessibility is not a first-order consideration. Many projects use custom-built aircraft with no guidance on how to replicate the platform for other researchers. In some cases, these custom drones require low-level electrical engineering experience to ensure safe and stable operation. On the other hand, there has been some effort to increase accessibility for drone programming. Beseda et al presented a mission-oriented control infrastructure for easily managing swarms of autonomous UAVs~\cite{Besada2019}. Mottola et al proposed a simple but expressive API for drone team control~\cite{Mottola2014}. Tilley et al developed a block programming language that could allow children to program autonomous drones~\cite{Tilley2017}. While this work is useful, these projects do not present a practical integration strategy with real consumer drones, nor do they circumvent the difficulties of prior custom-built research platforms.
 
 \subsection{Versatility}
-Mission versatility is a feature that most heavy fully-autonomous drones already possess, since they carry generalized compute like CPUs and GPUs which can run GPLs (general-purpose programming languages) and inference deep neural networks with relatively low latency. However, achieving this versatility on lightweight drones is an enduring challenge. This is because miniaturizing generalized compute hardware is difficult, and weight-optimized compute hardware is inflexible~\cite{Hu2022}. Still, many have tried to modify lightweight onboard hardware to be able to run heavyweight computer vision. Albanese et al propose a neural accelerator modification to a Raspberry Pi which could be flown onboard small UAVs~\cite{Albanese2022}. Zhang et al demonstrate an FPGA architecture for drones that can inference neural networks with much lower power demand than GPUs~\cite{Zhang2022}.
+Mission versatility is a feature that most heavy fully-autonomous drones already possess, since they carry generalized compute like CPUs and GPUs which can run GPLs (general-purpose programming languages) and inference deep neural networks with relatively low latency. However, achieving this versatility on lightweight drones is an enduring challenge. This is because miniaturizing generalized compute hardware is difficult, and weight-optimized compute hardware is inflexible~\cite{Hu2022}. Still, many have tried to modify lightweight onboard hardware to be able to run heavyweight computer vision algorithms. Albanese et al propose a neural accelerator modification to a Raspberry Pi which could be flown onboard small UAVs~\cite{Albanese2022}. Zhang et al demonstrate an FPGA architecture for drones that can inference neural networks with much lower power demand than GPUs~\cite{Zhang2022}. None of these projects have gained much traction, likely due to their poor practicality and usability.
+
+Corporate research projects have yielded promising results, such as the ModalAI Starling series and the Bitcraze Crazyflie shown in Figure~\ref{fig:drone-dev-platforms}. These both use custom compute hardware to provide a Linux programming environment in an ultra-lightweight package~\cite{Bitcraze, ModalAI}. Still, these systems do not truly capture the versatility of CPU/GPU-based systems, and neither fully support the open-source libraries which drive most computer vision research, like OpenCV and Pytorch. This significantly hinders practical use.
 
 \begin{figure}
     \centering
-    \subfloat[\centering Bitcraze Crazyflie\\(27~g)]
+    \subfloat[\centering Bitcraze Crazyflie~\cite{Bitcraze}\\(27~g)]
     {\includegraphics[width=0.30\textwidth, height=1.5in]{chapter2/FIGS/crazyflie.jpg}}
     \qquad
-    \subfloat[\centering Modal AI Starling\\(280~g)]
+    \subfloat[\centering Modal AI Starling~\cite{ModalAI}\\(280~g)]
     {\includegraphics[width=0.30\textwidth, height=1.75in]{chapter2/FIGS/starling-2.png}}
     \caption{Consumer Drone Development Platforms}
     \label{fig:drone-dev-platforms}
 \end{figure}
 
 \subsection{Portability}
+The ability to seamlessly switch underlying drone hardware has only recently become a hot research topic. This is motivated by greater research impact; cross-platform drone work has a much wider reach. One example of such work is BeeCluster, a drone-agnostic swarm orchestration tool with a simplified task programming interface~\cite{He2020}. BeeCluster supports drones that talk using the BeeCluster protocol, and provides a high-level API wrapper over this protocol. As of the time of writing this document, no guidance has been provided by the authors on how to integrate a new drone platform into BeeCluster, but the framework theoretically allows for heterogeneous swarm operation~\cite{BeeCluster}.
 
 \subsection{Cost}
+Driving down cost has been an enduring goal of the drone research community. Eller et al designed a low-cost autonomous platform for under \$225~\cite{Eller2019}. Hardy et al used a sub-\$1,000 drone to map malaria breeding grounds~\cite{Hardy2017}. S{\o}rensen et al proposed an \$800 aircraft for mobile remote sensing~\cite{Sorensen2017}. Projects like these aim to make drones more economically viable, especially in regions with less purchasing power. However, none are concerned with the other important challenges outlined, like weight.  
 
-\section{A Key Insight: the Onboard Compute Trade-off}
+\section{The Quest for Better Autonomous Drones}
 \label{sec:better-autonomous-drones}
-The key factors of \textit{weight}, \textit{usability}, \textit{versatility}, \textit{portability}, and \textit{cost} all hinder autonomous drone development and deployment, yet no proposed system has solved all of these issues simultaneously. Central to this problem is the trade-off between heavy, generalized, onboard compute that supports common programming ecosystems but exceeds regulatory limits, and lightweight, specialized, onboard compute that can only run tailor-made programs, but is light enough to fly within regulatory bounds. 
+The key factors of \textit{weight}, \textit{accessibility}, \textit{versatility}, \textit{portability}, and \textit{cost} all hinder autonomous drone development and deployment, yet no proposed system has solved all of these issues simultaneously. Clearly, significant research effort has been spent on solving these problems; so why does no such system exist?
+
+\subsection{The Onboard Compute Trade-Off}
+Central to this question is what I call the \textit{onboard compute trade-off}. The onboard compute trade-off is a property of unmanned aerial platforms that claims:
+
+\begin{displayquote}
+Traditional hardware, like CPUs and GPUs, offers the benefit of versatile, software portable, cost-effective compute power at the expense of weight. Specialized hardware offers the benefit of light weight at the expense of versatile, software portable, cost-effective compute power. Thus, in order to reduce weight, \textit{versatility, portability, and cost must be compromised}.
+\end{displayquote}
+
+This fact has limited the development of lightweight fully-autonomous drones and it is chiefly responsible for the gap that exists in the drone market today. Unfortunately, even with recent technological advances, it is unclear whether this challenge can be solved. However, there may be ways it can be circumvented.
+
+\subsection{The Advent of Edge Computing}
+Over the past few years, a new computational paradigm has emerged called \textit{edge computing}. Edge computing gives mobile devices access to strong computational resources at low latency by offloading to a network-proximal server~\cite{Satya2017}. In many ways, this is similar to cloud computing. The theory is that mobile devices will always be resource-poor compared to data centers. By sending compute jobs over the network, running on the vast compute of a data center, and getting the result back, mobile devices can mitigate their computational limitations. 
+
+The key insight of edge computing is that some computation is \textit{latency-sensitive}. That is, the faster the result is returned to the user, the better the system performs. This is usually the case for interactive applications, like augmented reality, or for reactive applications, like robotic actuation in response to visual stimuli. In these cases, sending a compute job to the cloud may be too slow. Edge computing positions smaller groups of servers physically closer to mobile clients, usually co-located with cell towers. This hugely decreases latency without sacrificing much per-user compute power, since edge servers, due to their smaller reach, have fewer tenants than cloud servers~\cite{Charyyev2020,Dolui2017}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\linewidth]{chapter2/FIGS/edge-computing.jpg}
+    \caption{Edge Computing Paradigm}
+    \label{fig:edge-computing}
+\end{figure}
+
+\subsection{Autonomous Drones and the Edge}
 
 
 
