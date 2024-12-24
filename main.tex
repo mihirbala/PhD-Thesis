@@ -33,10 +33,21 @@
 \usepackage[table]{xcolor}
 \usepackage{textcomp}
 \usepackage{csquotes}
+\usepackage{gensymb}
 \usepackage[backref,pageanchor=true,plainpages=false, pdfpagelabels, bookmarks,bookmarksnumbered,
 %pdfborder=0 0 0,  %removes outlines around hyper links in online display
 ]{hyperref}
 \usepackage{subfig}
+
+\usepackage{pifont}
+\newcommand*\colourcheck[1]{%
+        \expandafter\newcommand\csname #1check\endcsname{\textcolor{#1}{\ding{52}}}%
+}
+\newcommand*\colourcross[1]{%
+        \expandafter\newcommand\csname #1cross\endcsname{\textcolor{#1}{\ding{53}}}%
+}
+\colourcheck{green}
+\colourcross{red}
 
 % Approximately 1" margins, more space on binding side
 %\usepackage[letterpaper,twoside,vscale=.8,hscale=.75,nomarginpar]{geometry}
@@ -126,6 +137,7 @@ To be written.
 \chapter{Background and Related Work}
 \input{chapter2/chapter2}
 \chapter{Connecting COTS Drones to the Edge}
+\input{chapter3/chapter3}
 %\appendix
 %\include{appendix}
 
