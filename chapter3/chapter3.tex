@@ -14,7 +14,7 @@ These are challenges that any prototype must overcome, regardless of underlying 
 For SteelEagle, drones connect to the edge over public 4G/5G cellular. Cellular has excellent coverage in populated areas and has favorable penetration characteristics~\cite{FCC}. This ensures good service wherever SteelEagle drones fly, especially in urban or suburban settings. Unfortunately, at the time of writing this dissertation, no lightweight COTS photography drones are equipped with cellular connectivity; they are designed to be operated within visual line-of-sight of a pilot, a task for which WiFi or RC is well-suited. For my prototype to work, I will have to bring cellular connectivity to a COTS drone without modifying its internal components.
 
 \subsection{Hardware}
-For my initial prototype, I chose to work with the Parrot Anafi~\cite{ParrotAnafi}. The Anafi is a COTS photography drone that weighs 320~g and costs \$470. It is equipped with an autopilot that can follow GPS waypoints and perform automatic stabilization. Table~\ref{tab:anafi-features} shows a more detailed specification of the aircraft.
+For my initial prototype, I chose to work with the Parrot Anafi~\cite{ParrotAnafi}. The Anafi is a COTS photography drone that weighs 320~g and costs \$470. It is equipped with an autopilot that can follow GPS waypoints and perform automatic stabilization. This stabilization involves increasing thrust of rotors to compensate for wind, allowing the drone to maintain its position even in windy conditions. Table~\ref{tab:anafi-features} shows a more detailed specification of the aircraft.
 
 \begin{figure}
     \centering
@@ -40,13 +40,16 @@ For my initial prototype, I chose to work with the Parrot Anafi~\cite{ParrotAnaf
      \hline
      Video Stream & 720p 30fps \\
      \hline
-     Autopilot & Custom \\
+     Autopilot* & Custom \\
      \hline
      API & Parrot Olympe / GroundSDK \\
      \hline
      Connectivity & WiFi \\
      \hline
     \end{tabular}
+    \begin{captext}
+    \\[0.1cm] \small * Drone autopilots manage the low-level control systems onboard, e.g. the ESCs. They usually have the ability to follow GPS waypoints and auto-stabilize under windy conditions. Popular autopilots are ArduPilot and PX4~\cite{Ardupilot,PX4}.
+    \end{captext}
     \caption{Parrot Anafi Specifications}
     \label{tab:anafi-features}
 \end{table}
@@ -67,7 +70,7 @@ Most drones are equipped with a magnetometer for discerning bearing. The Parrot 
 
 \section{Achieving Cellular Connectivity}
 \label{sec:achieving-cell-conn}
-The Parrot Anafi, like most photography drones, only supports WiFi connectivity and mandates a constant connection to the pilot controller. As stated earlier, the goal of SteelEagle is to use this drone without modification and with an entirely COTS payload.  Thus, any prototype must operate within these constraints. In order to integrate a cellular connection into the loop, it must ensure that from the drone's perspective, it is always connected to what it thinks is a human pilot. One possibility is to mount a router-like device onboard which connects to the drone WiFi and also maintains a cellular connection to the edge. Such a device would have to be light enough to fly but also would need to be able to power itself for the duration of a flight. Ideally, it would also have minimal internal compute so it can still control the drone during brief network outages.
+The Parrot Anafi, like most photography drones, only supports WiFi connectivity and mandates a constant connection to the pilot controller. As stated earlier, the goal of SteelEagle is to use this drone without modification and with an entirely COTS payload.  Thus, any prototype must operate within these constraints. In order to integrate a cellular connection into the loop, it must ensure that from the drone's perspective, it is always connected to what it thinks is a human pilot. One possibility is to mount a router-like device onboard which connects to the drone WiFi and also maintains a cellular connection to the edge. Such a device would have to be light enough to fly but also would need to be able to power itself for the duration of a flight. Ideally, it would also have some internal compute so it can still control the drone during brief network outages.
 
 \subsection{Mobile Phone}
 In the COTS mobile device space, one of the best SWaP (size, weight, and power) optimized devices is the mobile phone. Mobile phones have grown immensely powerful in recent years, with some rivaling the power of laptop computers. Furthermore, they are lightweight (usually under 200~g), have a full-featured software development environment, and can power themselves for several hours, even under load. Their connectivity over WiFi and cellular is highly reliable and extensively tested.
@@ -83,7 +86,7 @@ In the context of the Parrot Anafi, an Android phone would work well for this pu
 
 Now that I had selected a device, it was time to mount it onboard the drone. For my initial mount, to save weight, I used industrial strength velcro and rubber bands. The drone was able to fly autonomously with the phone onboard and offload its video stream to the edge. However, I observed strange flight characteristics which caused several crashes. Upon further investigation, I determined that the phone was interfering with the magnetometer on the drone. This was causing the drone to lose track of its bearing mid-flight and veer off course.
 
-To solve this magnetic interference, I added a layer of EMI  (electro-magnetic interference) shielding between the phone and the drone chassis. The shielding was made of aluminum, a cost-effective solution for absorbing electro-magnetic radiation~\cite{Orasugh2023}. After testing, I determined that this mostly negated the observed interference. Unfortunately, it also added significantly to the payload weight, so much so that it exceeded the maximum takeoff mass (MTOM) of the aircraft. Once an aircraft's payload surpasses MTOM, it cannot fly because the lift it generates is no longer greater than its weight. Even with the lightest Android smartphones available, like the 61~g Unihertz Jelly Pro, the added weight of EMI shielding exceeded the Anafi's MTOM. 
+To solve this magnetic interference, I added a layer of EMI  (electro-magnetic interference) shielding between the phone and the drone chassis. The shielding was made of Mu-metal, a nickel-iron ferromagnetic alloy used to absorb electro-magnetic radiation~\cite{Orasugh2023}. After testing, I determined that this mostly negated the observed interference. Unfortunately, it also added significantly to the payload weight, so much so that it exceeded the maximum takeoff mass (MTOM) of the aircraft. Once an aircraft's payload surpasses MTOM, it cannot fly because the lift it generates is no longer greater than its weight. Even with the lightest Android smartphones available, like the 61~g Unihertz Jelly Pro, the added weight of EMI shielding exceeded the Anafi's MTOM. 
 
 As a result of the interference and MTOM restrictions, I was forced to abandon the phone prototype. It was too heavy for the Parrot Anafi hardware. I began searching for an alternative COTS device, much lighter than the Pixel 4a, but with the same broad specifications (self-contained, WiFi and cellular, self-powered, able to run Parrot GroundSDK or Olympe). 
 
@@ -99,9 +102,7 @@ In many ways, smartwatches are the perfect device for SteelEagle's use case. The
     \label{fig:watch-control}
 \end{figure}
 
-After porting Parrot GroundSDK to WearOS, I was able to establish a 4G connection from the edge to the watch while autonomously piloting the drone via onboard software (Figure~\ref{fig:watch-control}). Now, all that was left to do was to physically mount the watch on the drone. I used a 3D-printed harness for this task, which clips onto the Parrot Anafi's removable battery. The harness weighs an additional 14~g, bringing the total payload weight to 39~g. Figure~\ref{fig:harness} shows the full assembly mounted on the aircraft. This brings the total take-off weight to 359~g, just 109~g above the 250~g FAA regulation threshold.
-
-Through rigorous testing, I determined that the watch payload did not exhibit the same negative flight characteristics as the Pixel 4a payload. It did not create as much EMI, likely because of its smaller size and lower power draw, and thus no shielding was needed. Additionally, the weight of the payload was far below the Anafi's MTOM, even with the added 3D printed mount to securely fasten it onboard.
+After porting Parrot GroundSDK to WearOS, I was able to establish a 4G connection from the edge to the watch while autonomously piloting the drone via onboard software (Figure~\ref{fig:watch-control}). Now, all that was left to do was to physically mount the watch on the drone. I used a 3D-printed harness for this task, which clips onto the Parrot Anafi's removable battery. The harness weighs an additional 14~g, bringing the total payload weight to 39~g. Figure~\ref{fig:harness} shows the full assembly mounted on the aircraft. This brings the total take-off weight to 359~g, just 109~g above the 250~g FAA regulation threshold. Through rigorous testing, I determined that the watch payload did not exhibit the same negative flight characteristics as the Pixel 4a payload. It did not create as much EMI, likely because of its smaller size and lower power draw, and thus no shielding was needed. Additionally, the weight of the payload was far below the Anafi's MTOM, even with the added 3D printed mount to securely fasten it onboard.
 
 The Samsung Galaxy Watch 4 finally yielded a successful prototype. The watch payload was able to autonomously fly the drone while maintaining a cellular connection to the edge. However, much work still remained unfinished. In particular, the drone's RTSP video stream would need to be transmitted to the edge in order to run the AI algorithms responsible for true autonomy: object detection, image segmentation, and obstacle avoidance among others. This would prove to be a formidable obstacle that pushed the watch hardware to its limit.
 
@@ -116,7 +117,7 @@ The Samsung Galaxy Watch 4 finally yielded a successful prototype. The watch pay
 \label{sec:austere-computing}
 The watch is an austere computing environment with a dual-core
 1.18~GHz ARM Cortex-A55 processor, 1.5 GB RAM, and 16 GB flash.
-Table~\ref{tab:austerity} compares its attributes to the Google Pixel 4a and to the Unihertz Jelly Pro, the lightest-available Android smartphone. As wearable hardware, the watch has stringent thermal protection to shut itself down if its temperature approaches hardware limits. Both computing and network transmission cause watch temperature to rise significantly.
+Table~\ref{tab:austerity} compares its attributes to the Google Pixel 4a and to the Unihertz Jelly Pro, the lightest-available Android smartphone. As wearable hardware, the watch has stringent thermal protection to shut itself down if its temperature approaches hardware limits. In addition, since wearables are meant to be worn, these hardware temperature limits must be much lower than traditional computers to prevent skin burns~\cite{Hepokoski2021}. Both computing and network transmission cause watch temperature to rise significantly.
 
 This is a major problem, especially since in my design, the watch offloads the drone video stream to the edge. Typically, streaming tasks are both compute and transmission intensive. The act of sending frames too often or decoding frames onboard could cause overheating. In the case of the Samsung Galaxy Watch 4, overheating is detected by the operating system which in turn triggers a thermal shutdown. If this occurs, all currently running applications are suspended and the watch goes into hibernation until it is cool enough to proceed. A thermal shutdown in-flight would turn off the Parrot GroundSDK software running onboard and would thus trigger a pilot disconnection event on the drone. When this occurs, the drone returns automatically to its takeoff GPS location and lands. While this is far from disastrous, it would certainly be a serious handicap. As a result, the watch must be conservative in its network transmission and onboard computation in order to prevent overheating.
 
@@ -144,7 +145,8 @@ Memory & 1.5~GB & 3~GB & 6~GB\\
 \label{sec:anatomy-drone-stream}
 The Parrot Anafi produces an encoded 720p 30fps video stream. It is produced on the drone's hardware and thus \textit{cannot be modified}. It is generated over the drone's WiFi network and can only be consumed by a single client on the network. Unlike most video streams, this stream uses an \textit{intra-refresh slice-decode} encoding scheme. An intra-refresh slice-decode encoding scheme is a streaming paradigm designed to minimize the visual impact of packet loss. 
 
-To understand this special encoding scheme, first consider a normal H.264 video stream. The encoding scheme for these streams involves two types of data: complete frames (I frames) and inter frames (P and B frames). A complete frame is a full photo capture of a moment in time. When a complete frame is transmitted, it requires no additional data to decode. The trade-off is that complete frames are bandwidth hungry. An individual 720p complete frame can be several KBs of data. By contrast, inter frames only capture the \textit{change from the previous frame}. They require reference data in order to decode, and are meaningless on their own. Their advantage is that they are very bandwidth efficient, sometimes on the order of a few hundred bytes in size. An H.264 video stream operates by transmitting a complete frame followed by a set amount of inter frames before looping back. This preserves fidelity by smoothing out gaps between complete frames with inter frames but also preserves bandwidth by sparingly transmitting complete frames.
+To understand this special encoding scheme, first consider a normal H.264 video stream. The encoding scheme for these streams involves two types of data: complete frames (I frames) and inter frames (P and B frames). A complete frame is a full photo capture of a moment in time. When a complete frame is transmitted, it requires no additional data to decode. The trade-off is that complete frames are bandwidth hungry. An individual 720p complete frame can be several
+KBs of data. By contrast, inter frames only capture the \textit{change from the previous frame}. They require reference data in order to decode, and are meaningless on their own. Their advantage is that they are very bandwidth efficient, sometimes on the order of a few hundred bytes in size. An H.264 video stream operates by transmitting a complete frame followed by a set amount of inter frames before looping back. This preserves fidelity by smoothing out gaps between complete frames with inter frames but also preserves bandwidth by sparingly transmitting complete frames.
 
 There is one major negative of typical H.264 video streams in the context of mobile devices: they are not resilient to packet loss. On the Internet, which is a mostly wired network, this is not a serious problem. But, over the air, packet loss is frequent. If a complete frame is lost, this kind of stream must shut down until a new one can be broadcast; all following inter frames will have no complete frame to refer to and will be rendered useless. Usually this can take a whole second or more, during which a drone pilot, for example, would not be able to see.
 
@@ -154,7 +156,10 @@ This has two positive attributes. The first is that this minimizes the impact of
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\linewidth]{chapter3/FIGS/slice-encoding-crop.pdf}
+    \includegraphics[width=0.9\linewidth]{chapter3/FIGS/slice-encoding-crop.pdf}
+    \begin{captext}
+    \\[0.1cm] \small Each segment of three frames contains one I-slice (shown in orange) and transmits the remaining slices as P-slices (shown in blue). The I-slice that is sent is chosen from the center of the frame going outward. After 30 frames, the process starts from the beginning.
+    \end{captext}
     \caption{Intra-Refresh Slice-Decode Stream}
     \label{fig:slice-encoding}
 \end{figure}
@@ -164,7 +169,7 @@ There are two obvious methods for offloading the drone video stream from the wat
 
 \subsubsection{Method 1: Decode-on-Device}
 \label{sec:method-1}
-Decode-on-device involves the watch decoding the drone video stream then sending decoded frames individually to the edge. This allows for some pre-processing on the watch side, such as downscaling or stream throttling for bandwidth saving. Unfortunately, the Anafi's intra-refresh slice-decode stream poses a major hurdle to this method's success: due to its construction, \textit{every frame must be decoded in order to maintain a coherent stream}. This is in stark contrast to a typical stream, which only requires the I frames (usually generated at around 1~fps) to be decoded to maintain coherence. As such, any device consuming the drone stream must decode one frame every 33~ms on average to keep up with the 30~fps output and prevent drifting latency, regardless of cellular transmission frequency. Drifting latency is a phenomenon where latency increases over time due to queueing delay. If a device drops packets to keep up with this strict time bound, it could cause some loss of quality as important I slices are discarded. On most devices, this is not an issue. But on the constrained compute of the Galaxy Watch 4, even relatively light workloads are considered difficult. Table~\ref{tab:decoding-time} shows the time taken to decode a frame of the Anafi's video stream by the watch, the Pixel 4a, and the Unihertz Jelly Pro. As shown, both the watch and the Jelly Pro cannot decode fast enough to maintain stable latency.
+Decode-on-device involves the watch decoding the drone video stream then sending decoded frames individually to the edge. This allows for some pre-processing on the watch side, such as downscaling or stream throttling for bandwidth saving. Unfortunately, the Anafi's intra-refresh slice-decode stream poses a major hurdle to this method's success: due to its construction, \textit{every frame must be decoded in order to maintain a coherent stream}. This is in stark contrast to a typical stream, which only requires the I frames (usually generated at around 1~fps) to be decoded to maintain coherence. As such, any device consuming the drone stream must decode one frame every 33~ms on average to keep up with the 30~fps output and prevent drifting latency, regardless of cellular transmission throughput. Drifting latency is a phenomenon where latency increases over time due to queueing delay. If a device drops packets to keep up with this strict time bound, it could cause some loss of quality as important I slices are discarded. On most devices, this is not an issue. But on the constrained compute of the Galaxy Watch 4, even relatively light workloads are considered difficult. Table~\ref{tab:decoding-time} shows the time taken to decode a frame of the Anafi's video stream by the watch, the Pixel 4a, and the Unihertz Jelly Pro. As shown, both the watch and the Jelly Pro cannot decode fast enough to maintain stable latency.
 
 \begin{table}
         \centering
@@ -234,6 +239,7 @@ A successful stream to the cloudlet must have acceptable latency, throughput, an
 The austere environment on the watch makes achieving such a stream a challenge. The watch cannot decode frames fast enough to maintain stable latency, and thus cannot decode-on-device and send at a throttled framerate. It also cannot transmit consistently enough to pass-through stream from the drone to the cloudlet without decoding. To discover a path forward, I devised a set of experiments that would better characterize the bottlenecks in the system. By understanding these bottlenecks, an effective solution could be found.
 
 \subsection{Experimental Setup}
+\label{sec:streaming-experiment-setup}
 For each of the following experiments, the setup is identical. The drone is started so that its RTSP stream and WiFi network are initialized. Then, the client device is connected to the drone’s WiFi network and the stream application is launched on the device. The application uses a variable method to stream image data from the drone to a cloudlet. When the frame arrives at the cloudlet, it is saved along with its time of arrival. The drone’s camera is pointed at a screen connected directly to the cloudlet which is displaying the current UNIX timestamp. By comparing the UNIX timestamp in the received image and its time of arrival, the transmission latency can be determined in post processing. The UNIX timestamp can also be used to determine the time at which thermal shutdown occurs. Figure~\ref{fig:streaming-experiment} shows the experimental setup. For experiment 1 and 2, I provide two other devices, the Google Pixel 4a and the Unihertz Jelly Pro as baselines. The duration of the experiments in all cases is the duration of a drone flight: 20 minutes.
 
 \begin{table}
@@ -311,16 +317,21 @@ $d = 4$ & $\leq$ 5\% & 1~s, 50\% &	1~s, 10\% & 6~s, 30\% \\[0.1cm]
 \end{table}
 
 \subsection{Experiment 3: High-Quality Frames}
-If the watch decodes the stream as outlined in Method 1~\S\ref{sec:method-1}, it produces very high-quality images with no visual artifacts at the cost of drifting latency. This is not acceptable by the standards outlined earlier in Section~\ref{sec:quest-working-stream}. Even so, room for compromise remains. While not desirable, intentional packet dropping is an effective way to reduce latency at the cost of quality. Packet dropping reduces the average decode time per frame by strategically removing as much redundant data as possible. In this experiment, I determine how much packet dropping is acceptable to preserve quality. I test the watch under the 1~fps throttled decode-on-device workload, decoding chunks of $c$ packets and then subsequently dropping $d$ packets. For example, a $c=2, d=2$ scheme would involve decoding 2 out of every 4 packets. Table~\ref{tab:hq-frames} shows the results of the experiment. As $d$ increases, quality drops but latency decreases as the average time to decode shrinks. In the other direction, as $c$ increases, latency generally increases too since the average time to decode grows. At $c=2, d=3$, there is a sweet-spot where the watch latency is minimal and the impact on frame quality is also minimal. It is this combination that finally produces a workable stream.
+If the watch decodes the stream as outlined in Method 1~\S\ref{sec:method-1}, it produces very high-quality images with no visual artifacts at the cost of drifting latency. This is not acceptable by the standards outlined earlier in Section~\ref{sec:quest-working-stream}. Even so, room for compromise remains. While not desirable, intentional packet dropping of the video stream prior to decoding is an effective way to reduce latency at the cost of quality, since fewer stream packets reduces the time spent decoding. In this experiment, I determine how much packet dropping is acceptable to preserve quality. I test the watch under the 1~fps throttled decode-on-device workload, decoding chunks of $c$ packets and then subsequently dropping $d$ packets. For example, a $c=2, d=2$ scheme would involve decoding 2 out of every 4 packets. Table~\ref{tab:hq-frames} shows the results of the experiment. As $d$ increases, quality drops but latency decreases as the average time to decode shrinks. In the other direction, as $c$ increases, latency generally increases too since the average time to decode grows. At $c=2, d=3$, there is a sweet-spot where the watch latency is minimal and the impact on frame quality is also minimal. It is this combination that finally produces a workable stream.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.8\linewidth]{chapter3/FIGS/temperature.png}
+    \begin{captext}
+    \\[0.1cm]
+    \small The red square at the end of the 2~fps temperature curve indicates a thermal shutdown occurred. The 0.7~fps graph continues without overheating.
+    \end{captext}
     \caption{Watch Temperature at Different Throttling Levels}
     \label{fig:temperature}
 \end{figure}
 
 \subsection{The Stream in Practice}
+\label{sec:stream-in-practice}
 Putting together the results of the three experiments, a working solution emerges. It solves each of the requirements presented in Section~\ref{sec:quest-working-stream}:
 \begin{itemize}
     \item \textbf{Sustainability}: \textit{the watch stream must sustain itself for the duration of a drone flight (at least 20 minutes).}
@@ -332,5 +343,5 @@ Putting together the results of the three experiments, a working solution emerge
 \end{itemize}
 Integrated into the larger application, parts of this streaming scheme must be modified to make way for other compute resources. In particular, throttling to 1~fps proves too demanding once other processes are factored in. Once throttling is dropped to 0.7~fps, the stream once again is functional. Figure~\ref{fig:temperature} shows the watch temperature over time with a 2~fps and a 0.7~fps throttled stream within the larger application. At 2~fps, the stream experiences thermal shutdown once the watch reaches an external temperature of 108\degree F. At 0.7~fps, the watch maintains an external temperature under 105\degree F for 20 minutes without ever experiencing a thermal shutdown.
 
-With the stream now working, the Parrot Anafi has successfully been connected to the edge via its Galaxy Watch 4 payload. The watch can offload the drone's video stream over 4G at 0.7~fps with 1~s latency to the edge, and receive results back from the powerful algorithms there before deciding on a new course of action. The drone can operate BVLOS without a human pilot for as long as its battery can sustain it. In effect, the Parrot Anafi has become fully-autonomous.
+With the stream now working, the Parrot Anafi has successfully been connected to the edge via its Galaxy Watch 4 payload. The watch can offload the drone's video stream over 4G at 0.7~fps with 1~s latency while simultaneously sending actuation commands. The drone can also operate BVLOS without the need for any connected human pilots. Now, all that is needed is a complementary edge software backend that can provide the drone with the intelligence required for full autonomy.
 
