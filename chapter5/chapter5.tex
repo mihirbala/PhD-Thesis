@@ -1,1 +1,77 @@
-The watch prototype
+The watch prototype is severely limited in its ability to deliver a high throughput and low latency video stream to the edge, hindering the benefits of edge computing. In order to better take advantage of cloudlet resources, a new offload device is needed which can transmit the video stream without the thermal restrictions of the watch. As discussed in Section~\ref{sec:achieving-cell-conn}, there are no current Android products other than smart watches that satisfy the stringent weight requirements of the Parrot Anafi platform. The only path forward is to explore other segments of the mobile computing landscape.
+
+In this chapter, I propose a new offload device which fixes some of the shortcomings of the watch prototype. I will show how it improves upon the watch in some ways but fails to match its capabilities in others. In Section~\ref{sec:watch-replacement}, I explain the process of choosing a new device. I give a breakdown of its control model and how it differs from the watch. In Section~\ref{sec:e2e-latency}, I use an agility analysis framework to compare the overall performance of each prototype.
+
+\section{Finding a Watch Replacement}
+\label{sec:watch-replacement}
+
+For any device to replace the watch, it must satisfy three main requirements of the SteelEagle pipeline: WiFi connectivity, cellular connectivity, and light weight. The first two requirements, WiFi and cellular connectivity, are relatively easy to find within the mobile device space. Meeting the weight requirement is much harder. The Parrot Anafi was able to fly with the watch payload, around 39~g, but was unable to fly with the Unihertz Jelly Pro payload, around 90~g with EMI shielding included. This gives an approximate weight range for a watch replacement.
+
+\subsection{Single-Board Computers}
+
+Outside of smart watches, the only devices that lie within this weight range are single-board computers (SBCs). SBCs are small form factor computers which live on a board about the size of a credit card. They are widely used for internet of things (IoT) projects because of their small size, low power draw, and connectivity (usually WiFi but sometimes cellular as well). The most popular SBC at the time of writing this dissertation is the Raspberry Pi~\cite{RaspberryPi}. The Pi is an Ubuntu SBC available in several sizes, the lightest of which is the Pi Zero 2 W at 16~g (Figure~\ref{fig:pi-zero}). The Zero is equipped with a quad-core 1~GHz CPU and 512~MB of RAM. It has built-in WiFi connectivity but must be augmented with a dongle for cellular connectivity. Additionally, it does not come with an integrated battery, so it must be powered by an external power pack that provides 1.2~A at 5.5~V. I determined that EMI shielding was not needed since the Pi did not create enough interference to hinder the Anafi's compass. With a power pack, 4G LTE dongle, and mount included, a Pi Zero payload for the Anafi would reach around 80~g. From experimentation, I found this was too heavy as the drone exhibited poor flight characteristics. A lighter alternative was needed.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.4\linewidth]{chapter5/FIGS/zero2.png}
+    \begin{captext}
+    \small \\[0.1cm] The Pi Zero 2 W is 16~g but lacks cellular connectivity and requires an external power source. 
+    \end{captext}
+    \caption{Raspberry Pi Zero 2 W~\cite{RaspberryPi}}
+    \label{fig:pi-zero}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \vspace{-0.5in}
+    \includegraphics[width=0.4\linewidth]{chapter5/FIGS/onion.png}
+    \vspace{-0.5in}
+    \begin{captext}
+    \small \\[0.1cm] The Onion Omega is 20~g with embedded WiFi and 4G. It requires a 3.3~V, 0.5~A power source. 
+    \end{captext}
+    \caption{Onion Omega 2 LTE~\cite{Onion}}
+    \label{fig:onion}
+\end{figure}
+
+After an extensive search, I settled on the 20~g Onion Omega 2 LTE (Figure~\ref{fig:onion})~\cite{Onion}. The Omega is another SBC with built-in WiFi and 4G LTE connectivity. It runs OpenWRT Linux and is equipped with a single-core 580~MHz CPU and 128~MB of RAM. This makes it much less powerful, on paper, than the Galaxy Watch 4 (1.18~GHz dual-core CPU, 1.5~GB RAM). It also does not have an integrated battery, and like the Pi, does not create enough interference to warrant EMI shielding. However, unlike the Pi, the Onion only requires 0.5~A at 3.3~V which allows it to be powered by a much smaller, lighter power pack. This means, after adding a mount, power pack, and antennas, the Onion payload is a much slimmer 53~g. Through experimentation, I found this weight to be viable for sustained flight without adverse flight effects.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\linewidth]{chapter5/FIGS/arch-onion.png}
+    \begin{captext}
+    \\[0.1cm]
+        \small The Onion acts as a pure relay, ferrying low-level command packets from the drone to the cloudlet. There, they are collected by a ``drone proxy'' which acts similarly to the watch in Figure~\ref{fig:sys-arch}.
+    \end{captext}
+    \caption{SteelEagle System Architecture with Onion Omega}
+    \label{fig:sys-arch-onion}
+\end{figure}
+
+\subsection{The Onion Omega Payload}
+
+The Onion's onboard compute resources are much worse than the Galaxy Watch 4. Its advantage is its thermals; it can run much, much hotter than the watch before overheating. This is mainly because it is not designed to be worn, and thus does not need to worry about burning its wearer. As a result, the Onion can transmit over its 4G link at a high rate without restrictions.
+
+The Onion cannot run a full-featured local application like the watch can, but its ability to use cellular without constraints suggests a different control paradigm. Rather than controlling the drone locally from the watch and only sending frames to the cloudlet to run computer vision algorithms, the Onion can act as a pure relay, ferrying telemetry and video packets upstream while delivering command packets downstream. In this approach, the watch application would migrate to the cloudlet and would communicate with the drone over the Onion (Figure~\ref{fig:sys-arch-onion}).
+
+This paradigm has some advantages. First, it theoretically allows the cloudlet to receive the raw video stream from the drone at full frame rate and relatively low latency (compared to the watch). Since the Onion does no video decoding, the latency cost paid is simply the transmission delay from the drone to the Onion over WiFi and from the Onion to the cloudlet over 4G. Second, the mission application lives on the cloudlet and so it can get computer vision results with negligible latency.
+
+On the other hand, this setup has significant drawbacks compared to the watch. The Onion payload is not as accessible as the watch payload. It has exposed electronics and requires the use of a flammable LiPo power pack to use, whereas the watch is a consumer device that is easy to charge and is fully weatherproofed. Furthermore, since the Onion acts as a pure relay, it is at the mercy of its cellular connection. It cannot function separately from the cloudlet, while the watch can still pilot the drone without computer vision assistance. It also cannot adapt the video stream to reduced bandwidth by throttling, and must transmit the whole stream to produce usable frames on the backend.
+
+Despite these problems, the Onion presents an opportunity to establish an upper bound for SteelEagle's performance. Where are the current bottlenecks in the system, and how can they be fixed? What is the best latency and throughput the system can achieve? How \textit{agile} is the system at reacting to new stimuli?
+
+\subsection{A Framework for Understanding Agility: the \ooda~Loop}
+To answer these questions, I introduce the concept of a drone \ooda~loop. Originally conceived in the 1950s to characterize
+man-machine symbiosis in combat aircraft, this concept has
+since been extended to many other domains~\cite{Boyd1986, Blaha2018, Johnson2023}.  The components of an \ooda~loop~(``Observe'', ``Orient,'' ``Decide,'' and
+``Act'') define the stages of any reactive pipeline that involves a
+human in the loop.  I extend this concept from its
+cyber-human origins to the cyber-physical context of an autonomous
+drone.  Viewing an AI pipeline through the lens of an \ooda~loop better explains its performance attributes.  It can tease apart latency and throughput limitations at fine granularity, thus enabling bottlenecks to be identified and optimized.
+
+An \ooda~loop's attributes directly limit drone agility.  As discussed in Section~\ref{sec:event-to-detection-latency}, throughput limitations may cause closely-spaced real-world events to not be
+resolvable as separate events.  High end-to-end latency
+may cause slow reactions and punish mis-predictions. SteelEagle's \ooda~loop includes: (a) on-drone sensing, (b) on-drone
+pre-processing, (c) transmission to cloudlet, (d) processing on a
+(possibly multi-tenant) cloudlet, (e) transmission to drone, (f)
+on-drone post-processing, and (g) drone actuation. I will profile and optimize these components through experimentation.
+
+\input{chapter5/e2e-latency}

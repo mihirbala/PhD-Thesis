@@ -23,6 +23,7 @@
 % makefiles.
 
 % some useful packages
+\usepackage{tikz}
 \usepackage{times}
 \usepackage{fullpage}
 \usepackage{graphicx}
@@ -46,6 +47,8 @@
 \newcommand*\colourcross[1]{%
         \expandafter\newcommand\csname #1cross\endcsname{\textcolor{#1}{\ding{53}}}%
 }
+\newcommand{\ooda}[0]{{\sc OODA}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \colourcheck{green}
 \colourcross{red}
 
@@ -142,6 +145,8 @@ To be written.
 \input{chapter4/chapter4}
 \chapter{A New Offload Device}
 \input{chapter5/chapter5}
+\chapter{Benchmarking the SteelEagle Pipeline}
+\input{chapter6/chapter6}
 
 %\appendix
 %\include{appendix}

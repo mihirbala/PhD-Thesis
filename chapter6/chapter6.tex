@@ -1,0 +1,87 @@
+While the \ooda~loop provides a broad understanding of drone reaction time, it does little to measure agility in real-world flight operations. In practice, it is performance on the latter that actually matters. Unfortunately, measuring this performance is difficult because there is no existing metric that defines the units in which to express an answer.
+
+Agility is a complex emergent cyber-physical property that depends
+both on cyber properties such as latency, throughput, and accuracy of
+the \ooda~loop, as well as physical properties such as the drone's
+size, weight, thrust, lift, drag and moment of inertia.  Under benign
+conditions, a non-agile drone may do as well as an agile one.  Only
+under adversarial conditions does the cost of agility become valuable.
+This cost may include increased size, weight, and bandwidth/latency
+demand arising from the need to be faster and more accurate in sensing
+and actuation.  The only way to quantify this complex property is to
+stress a drone on a precisely-defined task in a reproducible
+environment, and to use task-level metrics as surrogates for agility.
+This leads directly to the creation of benchmarks for evaluating
+autonomous drone agility.
+
+In this chapter, I define two agility benchmarks for measuring drone agility. The first benchmark embodies tracking of an object that moves in an unpredictable manner, with many abrupt changes. The adversarial aspect of this benchmark lies in the existence of an active mobile agent that randomly changes its trajectory. The second benchmark embodies obstacle avoidance in tight spaces. The adversarial aspect of this benchmark lies in the close proximity of obstacles, the need to sense them in real time (e.g., to account for wind effects), and occlusion that prevents full foreknowledge of the optimal flight path.  Both benchmarks are parameterized, thereby enabling many levels of difficulty within a common benchmark framework. In Section~\ref{sec:prior-work-benchmarks}, I discuss previous work related to real drone flight benchmarking in reactive scenarios, and how my work improves upon it. In Section~\ref{sec:avoidance}--\ref{sec:tracking-results}, I outline my benchmarks for object tracking and obstacle avoidance respectively and the results from my experiments using them.
+
+\section{Prior Work on Drone Benchmarks}
+\label{sec:prior-work-benchmarks}
+
+There have been many efforts in the computer vision and machine
+learning community to create benchmarks for comparing drone
+performance on specific tasks. These focus exclusively on the accuracy
+of algorithms such as drone-based object tracking and face
+recognition, ignoring system attributes such as agility and end-to-end
+processing latency. Du et al~\cite{Du2018}, Li et al~\cite{Li2017},
+Kalra et al~\cite{Kalra2019}, and Zhao et al~\cite{Zhao2024} are
+examples of this genre.
+
+Many drone benchmarks do measure agility but involve only simulated
+tests. MAVBench~\cite{Boroujerdian2018} is one popular example. It
+consists of a closed-loop simulator and end-to-end application
+benchmark suite of five workloads pertaining to scanning, aerial
+photography, package delivery, 3D Mapping, and Search and Rescue.
+These workloads lack customization options, and often represent a
+specific simulated scenario which can only give limited perspective on
+real performance. Another simulation-based benchmark,
+FlightBench~\cite{Yu2024}, has agility workloads which provide several
+levels of difficulty. However, this difficulty is determined
+arbitrarily by the authors and the obstacle courses are too complex to
+practically replicate outside of the simulator. Additionally,
+simulations typically do not fully capture real flight performance,
+where sensors can experience noise which can influence actuation.
+
+There are live flight drone benchmarks that measure agility, but they
+are not as common. One example is the disturbance benchmark proposed
+by Wu et al~\cite{Wu2021} which uses an indoor course along with a fan
+to emulate obstacle avoidance in windy conditions. The course is fixed
+and does not provide guidance for replicating the described
+experiments. For this reason, while it is useful for evaluating the
+paper's proposed trajectory planner, it is not as useful for measuring
+the performance differences between different avoidance methods.
+
+Koubaa et al~\cite{Koubaa2020} describe an experimental study that
+compares on-board drone processing versus offloading to the cloud. The
+metrics of interest in their work are energy cost, bandwidth demand,
+and timeliness of results.  The last of these metrics is closest to
+our focus on the agility of drones.  However, the experiments
+described do not include drone actuation in response to real-time
+observations.  They are purely open loop experiments, with timeliness
+to cloud users being the metric of interest.  Further, this work only
+provides micro-benchmarks to evaluate these metrics.  There are no
+end-to-end benchmarks that include the full \ooda~pipeline of
+sensing, processing and drone actuation.
+
+Beyond these experimental efforts is a vast body of published
+literature on analytical or simulation-based evaluations of algorithms
+for specific drone tasks.  Examples include the work of Chen et
+al~\cite{Chen2020}, Hayat et al~\cite{Hayat2021}, Wang et
+al~\cite{Wang2020}, and Wu et al~\cite{Wu2020}.  These studies
+abstract away the physical drone, relying instead on hypothetical cost
+models of processing and communication.  AdaDrone~\cite{Chen2022} is a
+slightly more realistic approach that leverages a drone simulator.
+None of these efforts use real drones, with their intrinsic
+limitations of weight and maneuverability.  In contrast to these prior
+works, I focus on providing
+\textit{parameterized} and \textit{reproducible} benchmarking of
+drones in actual flight.
+
+
+\input{chapter6/tracking}
+\input{chapter6/avoidance}
+
+
+
+

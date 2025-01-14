@@ -29,7 +29,7 @@ than twice as much as my flight platform, and costs over five times as much~(Fig
 can clearly do more, but it may weigh more too.  My focus is on
 whether my 360~g drone-watch platform is too weak or just enough.
 
-The cloudlet used in the following experiments has 36 CPU cores, 128GB of RAM and an NVIDIA GeForce GTX 1080
+The cloudlet used in the following experiments has 36 CPU cores, 128~GB of RAM and an NVIDIA GeForce GTX 1080
 Ti GPU.  It is capable of using a private CBRS LTE network for low end-to-end latency. However, since the Galaxy Watch is not able to connect over CBRS, all presented results are based on public cellular network infrastructure.
 
 \subsection{Flight Duration}
@@ -94,7 +94,7 @@ Battery 4 & 20:00 & 16:43 &16.42\% & 15:12 &24.00\% \\
 \end{table}
 
 \subsection{Event-to-Detection Latency}
-\label{sec:e2elatency}
+\label{sec:event-to-detection-latency}
 
 The agility of my system is limited by the end-to-end latency of the
 processing pipeline~(Figure~\ref{fig:sys-arch}).  Events closer in
@@ -284,10 +284,10 @@ Processing a frame in Task-1 does not lead to actuation of the drone.
 In contrast, Task-2 represents a simple form of active vision. After
 detecting a moving target, the drone yaws to keep the target visible
 in the frame. There is no forward or backward motion, only rotation to
-keep the object in the FOV.  Target speed and motion predictability
+keep the object in the FOV. To find the target in frame,  Target speed and motion predictability
 clearly influence this task.  A fast-moving target that unpredictably
 and frequently changes its path is clearly hard to track.  As
-discussed earlier~(\S~\ref{sec:e2elatency}), the end-to-end latency of
+discussed earlier~(\S~\ref{sec:event-to-detection-latency}), the end-to-end latency of
 processing constrains tracking agility. With the help of the pilot
 (using the FreeFlight app), the Anafi Ai can also perform this task
 and thus I use it as a benchmark for my platform.
@@ -313,10 +313,29 @@ pause, then pausing for 2 seconds behind the pillar, and finally a 5
 second pause. Three runs of each delay were recorded.  For the Anafi
 Ai, the pilot must draw a bounding box around the target in order to
 start tracking; my platform automatically acquires and re-acquires
-the target.  Since my platform is constrained to below 1~FPS, we
+the target.  Since my platform is constrained to below 1~fps, we
 compare results from the two platforms on frames that are one second
-apart.  The Anafi Ai captures video at 30~FPS, so I expect its
+apart.  The Anafi Ai captures video at 30~fps, so I expect its
 responsiveness in this task to be significantly better.
+
+\subsubsection{Algorithm}
+\label{sec:tracking-algorithm-basic}
+Edge offload to a powerful cloudlet enables tracking via DNN
+inferencing on every frame received.  This ``brute force'' approach
+eliminates the need for predictive heuristics, such as those based on
+optical flow algorithms.  Heuristics are often needed by on-board
+tracking implementations because the computational demand would
+otherwise be too high.  The brute force approach makes tracking robust
+with respect to transient occlusions.  Flow-based approaches, in
+contrast, are typically unable to reacquire the target after occlusion
+ends.
+
+In my system, the cloudlet inferences each frame through an object
+detection DNN. The highest confidence bounding box is then chosen as
+the target, and its offset from the center of the frame is calculated
+in field-of-view degrees. The drone then actuates according to a
+PID-loop~\cite{Ang2005} based on the offset error.  This simple
+approach provides a good baseline at low complexity.
 
 \begin{table}
 	\centering\small
@@ -343,9 +362,7 @@ responsiveness in this task to be significantly better.
 	\begin{captext}
 		\centering \\[0.1cm] \small Figures in parentheses are standard deviations. \\
 	\end{captext}
-{(a) my Platform}\\[0.2in]
-
-\vspace{0.2in}
+{(a) My Platform}\\[0.2in]
 
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
@@ -375,7 +392,6 @@ Delay & Run & Total  & \multicolumn{2}{c|}{\footnotesize (Target Present)} & Act
 \caption{Task-2 Results}
 \label{tab:task2-results}
 \end{table}
-
 
 \subsubsection{Results}
 \label{sec:task2-results}
@@ -413,12 +429,12 @@ the target. my platform's DNN tracking handles the increased
 occlusion well, with only a modest increase in the number of failures.
 
 \begin{figure}
-\begin{minipage}[b]{0.5\linewidth}
+\begin{minipage}{0.5\linewidth}
 \centering
 \includegraphics[width=0.6\linewidth]{chapter4/FIGS/fig-pattern-square.pdf}\\
 {(a) Square}\\
 \end{minipage}
-\begin{minipage}[b]{0.5\linewidth}
+\begin{minipage}{0.5\linewidth}
 \centering
 \includegraphics[width=0.6\linewidth]{chapter4/FIGS/fig-pattern-cross.pdf}\\
 {(b) Cross}\\
@@ -451,13 +467,13 @@ person walking, jogging slowly, and running.  Two patterns were used:
 a square of side 10~m~(Figure~\ref{fig:patterns}(a)), and a cross with
 four arms of 5~m each~(Figure~\ref{fig:patterns}(b)).  The square
 embodies abrupt change of trajectory after 10~m of straight line travel,
-while the change of trajectory in the cross occurs after only 5~m.
+while the change of trajectory in the cross occurs after only 5~m. As in Task-1, the drone is initially hovering at fixed altitude.  I used altitudes of 5~m and 10~m in my experiments, but omitted 15~m
+since Section~\ref{sec:task1-results} indicates poor performance at this altitude. 
 
-As in Task-1, the drone is initially hovering at fixed altitude.  I used altitudes of 5~m and 10~m in my experiments, but omitted 15~m
-since Section~\ref{sec:task1-results} indicates poor performance at this altitude. Once the target is detected, the drone tracks it with a
-preset gimbal pitch and leash distance designed to adequately frame
-the target. If the drone loses sight of the target, it hovers until
-the object moves back into its FOV. No active search is currently made
+\subsubsection{Algorithm}
+\label{sec:tracking-algorithm-advanced}
+The algorithm used for this experiment is a modified version of the one used in Section~\ref{sec:task2}. Once the target is detected, the drone tracks it by centering the bounding box in the frame. At the same time, it estimates its distance to the target, and moves such that it preserves a preset \textit{leash distance}. This leash distance is chosen before the experiment to adequately frame the target at the specified altitude. If the drone loses sight of the target, it hovers until
+the object moves back into its FOV. No active search is made
 by the drone to reacquire a lost target.
 
 \subsubsection{Results}
@@ -470,7 +486,7 @@ successful tracking with only occasional failure.  When speed
 increases to 2.5~m/s, and then to 3.5~m/s, the number of failures
 increases sharply.  This is consistent with the computer vision
 processing pipeline following real-world scene changes too slowly, due
-to the very low frame rate~(0.7~FPS).  I show
+to the very low frame rate~(0.7~fps).  I show
 later~(\S\ref{sec:discussion-results}) that increasing frame rate
 improves tracking.  The effects of anomalously high LTE latency are
 visible in Run 3.  This points to the challenge of using public
@@ -500,7 +516,7 @@ cellular networks which can experience unpredictable changes in bandwidth and la
 	\end{tabular}
 	\begin{captext}
 		\centering \\[0.1cm] Figures in parentheses are standard deviations.\\
-		Abnormally high LTE latency was observed during the highlighted run.
+		Abnormally high LTE latency was observed during the red highlighted run. This is always a possibility when using public cellular infrastructure. During high latency events, the performance of the system suffers considerably.
 	\end{captext}
 	\caption{Task-3 Results {\small (Altitude = 5~m, Pattern = Square)}}
 	\label{tab:task3-results-5m-square}
@@ -691,26 +707,9 @@ effective.
 \label{fig:midas-sample}
 \end{figure}
 
-
-Many commercial drones have on-board obstacle avoidance capabilities,
-typically based on stereoscopic camera depth inference.
-The Parrot Anafi Ai has such capability, and can move out of the way
-of obstacles when the drone is moving forwards or backwards. my
-platform only has a single RGB camera, and must therefore rely upon
-monocular depth estimation.  I use a DNN-based algorithm called MiDaS
-~\cite{Ranftl2022} to provide relative depth estimates.  Using MiDaS
-on each frame received by the cloudlet, I construct an inverse
-relative depth map.  Based on the rate of change of relative depth
-across frames, I identify obstacles in the flight path and actuate
-away from them.  Figure~\ref{fig:midas-sample}(a) shows an input frame
-from one of my flights, as the drone approaches a pillar on a bridge.
-Figure~\ref{fig:midas-sample}(b) shows the depth-encoded output of my
-algorithm on this frame.  The drone actuates towards the green dot
-labeled ``safe'' to avoid the pillar on the left.
-
 Task-5 compares my platform's monocular obstacle avoidance, using my
-visual pipeline at 0.7~FPS, with the stereoscopic obstacle avoidance
-of the Anafi Ai using on-board computing at 30~FPS.  I place the 2~m
+visual pipeline at 0.7~fps, with the stereoscopic obstacle avoidance
+of the Anafi Ai using on-board computing at 30~fps.  I place the 2~m
 tall by 0.5~m wide foam pillar used in Task-2~(\S\ref{sec:task2})
 directly in the drone's path. The drone is instructed to fly at 1
 m/s at a fixed altitude of 1~m directly towards the obstacle.  I
@@ -720,7 +719,7 @@ capture a trace of the drone's flight path across 3 different runs.
 \begin{minipage}[b]{0.495\linewidth}
 \centering
 \includegraphics[width=0.95\linewidth]{chapter4/FIGS/fig-obstacle-path-ours.png}
-{(a) my Platform}
+{(a) My Platform}
 \end{minipage}
 \begin{minipage}[b]{0.495\linewidth}
 \centering
@@ -730,6 +729,28 @@ capture a trace of the drone's flight path across 3 different runs.
 \caption{Task-5 Results}
 \label{fig:obstacle-path}
 \end{figure}
+
+\subsubsection{Algorithm}
+\label{sec:midas-algorithm}
+Some drones utilize stereo cameras or LIDAR to detect and avoid
+obstacles. These give accurate depth data (i.e., distance to objects),
+allowing the drone to map out its environment and to calculate optimal
+collision-free trajectories.  Since my drone is only equipped with a
+monocular camera, it cannot infer depth via simple geometric methods.
+I therefore use a DNN-based algorithm called MiDaS ~\cite{Ranftl2022}
+to provide relative depth estimates.  Using MiDaS on each frame
+received by the cloudlet, we construct the inverse relative depth map.
+Based on the rate of change of relative depth across frames, we
+identify obstacles in the flight path and actuate away from them.
+Figure~\ref{fig:midas-sample}(a) shows an input frame from one of my
+flights, as the drone approaches the obstacle course.
+Figure~\ref{fig:midas-sample}(b) shows the depth-encoded output of my
+algorithm on this frame.  The drone actuates towards the green dot
+using a tuned PID-loop~\cite{Ang2005} to avoid the closest flags.
+Once past these flags, it re-computes a new safe objective towards
+which it can fly to avoid the second tier of flags.  It repeats these
+steps until it is past all obstacles. This simple approach to obstacle
+avoidance serves as a good experimental baseline.
 
 \subsubsection{Results}
 \label{sec:task5-results}
@@ -754,10 +775,10 @@ soon returns to its original flight path.
 My evaluation began with a single top-level question.  Could
 autonomous active vision be successfully implemented on a drone with
 severe constraints on both local compute and offloading?  The maximum
-offloading throughput of 0.7~FPS imposed by LTE thermal constraints on
+offloading throughput of 0.7~fps imposed by LTE thermal constraints on
 the watch~(\S\ref{sec:stream-in-practice}) is a severe bottleneck.  The
 heavy-tailed distribution of end-to-end processing pipeline latency,
-with a mean of over 1~s~(\S\ref{sec:e2elatency}), is another
+with a mean of over 1~s~(\S\ref{sec:event-to-detection-latency}), is another
 bottleneck.  Combined with limitations of onboard processing on the
 watch and the quality of the drone's optical system, these constraints
 pose a formidable barrier.
@@ -778,7 +799,7 @@ sustainable offloading rate. Even so, thanks to the modular design of SteelEagle
 \label{sec:discussion-results}
 
 The results for Task-3~(\S\ref{sec:task3}) make it clear that the
-drone's frame rate of 0.7~FPS is a major limiting factor for tracking.
+drone's frame rate of 0.7~fps is a major limiting factor for tracking.
 When tracking high speed objects that perform erratic maneuvers, the
 drone often only has one or two detections to actuate upon. It often
 does not get feedback on actuation errors until the target has exited
@@ -798,9 +819,9 @@ Task-3~(\S~\ref{sec:task3}). Although the laptop experiences the same
 WiFi, RTSP video stream, and LTE conditions as the watch did, it does
 not suffer from the same processing or LTE thermal limitations.  This
 enables offloading of video processing to the cloudlet a much higher frame
-rate. I chose a figure of 3~FPS since I believe that this is
+rate. I chose a figure of 3~fps since I believe that this is
 realistically achievable with slightly better watch hardware. Even the
-Samsung Galaxy 4 watch can sustain 3~FPS for over two minutes if it is
+Samsung Galaxy 4 watch can sustain 3~fps for over two minutes if it is
 pre-cooled with an ice pack.  This is the full length of one run of
 Task-3~(\S~\ref{sec:task3}).
 
@@ -811,7 +832,7 @@ Task-3~(\S~\ref{sec:task3}).
                 Frame & Run & Total & \multicolumn{2}{c|}{Success} & Slow & Fail\\
                 Rate  &  & Frames  & \multicolumn{2}{c|}{{\footnotesize (Target Present)}}& Act-  &  \\
                 \cline{5-5}
-                (FPS) &  &         &         & $\rm \frac{Present}{Total}$  & uation  & \\
+                (fps) &  &         &         & $\rm \frac{Present}{Total}$  & uation  & \\
                 \hline
                 & 1 & 361 & 283 &        & 1 &  77 \\
                 3& 2 & 360 & 342 & 83.7\% \scriptsize{(9.8\%)} & 1 & 17 \\
@@ -833,7 +854,7 @@ Task-3~(\S~\ref{sec:task3}).
         \centering\small
         \begin{tabular}{|c|c|c|}
                 \hline
-                Platform & Weight (g) & Throughput (FPS)\\
+                Platform & Weight (g) & Throughput (fps)\\
                 \hline
                 Galaxy Watch 4 & 26 & 1 \\
                 Future Offload Device & $<$50 & 3\\
@@ -850,7 +871,7 @@ Task-3~(\S~\ref{sec:task3}).
         \begin{tabular}{|c|c|c|c|}
                 \hline
                 & Inference & Effective Throughput \\
-                & (ms) & (FPS) \\
+                & (ms) & (fps) \\
                 \hline
                 Object & 56.3 & 17.8  \\
                 Detection & (5.9) &  \\
@@ -869,10 +890,10 @@ Task-3~(\S~\ref{sec:task3}).
 Table~\ref{tab:taskfps-results} presents my results for an altitude of
 5~m.  For easy comparison, the 3.5~m/s results from
 Table~\ref{tab:task3-results-5m-square} are reproduced below the new
-results.  Increasing the frame rate from 0.7~FPS to 3~FPS greatly
+results.  Increasing the frame rate from 0.7~fps to 3~fps greatly
 improves tracking --- almost a 20\% increase in the ``Success''
-column.  Even the worst run at 3~FPS achieves 77.5\% success which is
-6.1\% better than the best run at 0.7~FPS at 71.4\%
+column.  Even the worst run at 3~fps achieves 77.5\% success which is
+6.1\% better than the best run at 0.7~fps at 71.4\%
 success.  This improvement is obtained without modifying my tracking
 algorithm. 
 
@@ -882,20 +903,20 @@ hardware advancements.  For example, if a future offload device was no heavier
 than it is today but had the processing power of today's smartphones,
 how much better could it do tracking?  To gain some insight into these
 speculative questions, I tested the processing pipeline of
-Figure~\ref{fig:sys-arch} using different offload platforms.  Experiments were performed with an identical setup as in Section~\ref{sec:e2elatency}.
+Figure~\ref{fig:sys-arch} using different offload platforms.  Experiments were performed with an identical setup as in Section~\ref{sec:event-to-detection-latency}.
 
-Table~\ref{tab:throughput} shows the throughput in FPS and the weight
+Table~\ref{tab:throughput} shows the throughput in fps and the weight
 of various computing platforms today. The first two rows are the
-current platform and a theoretical future offload device.  The third row is a Pixel 4a smartphone, which is able to sustain 5~FPS. At 143~g, it is too heavy
+current platform and a theoretical future offload device.  The third row is a Pixel 4a smartphone, which is able to sustain 5~fps. At 143~g, it is too heavy
 for my drone to carry, but its 5x improvement in throughput is very
 attractive for robust tracking. The fourth row is a Dell Latitude 5420
-laptop, which is able to sustain 6 FPS; clearly, its 2.5~kg weight is
+laptop, which is able to sustain 6 fps; clearly, its 2.5~kg weight is
 far beyond the payload lift of any ultra-light drone.  Since the
-laptop can decode video and transmit it over WiFi at 30~FPS, the
+laptop can decode video and transmit it over WiFi at 30~fps, the
 bottleneck shifts to the LTE link and the cloudlet's DNN inference
 time.  As Table~\ref{tab:cloudlet-perf} shows, the cloudlet is able
-to inference at roughly 17.8~FPS for object detection~(Task-1 to
-Task-4) and 8.1~FPS on obstacle avoidance~(Task-5). Thus, an improved offload device on the drone could take better advantage of cloudlet resources.
+to inference at roughly 17.8~fps for object detection~(Task-1 to
+Task-4) and 8.1~fps on obstacle avoidance~(Task-5). Thus, an improved offload device on the drone could take better advantage of cloudlet resources.
 
 
 
