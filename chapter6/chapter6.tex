@@ -1,3 +1,4 @@
+\label{ch:benchmarks}
 While the \ooda~loop provides a broad understanding of drone reaction time, it does little to measure agility in real-world flight operations. In practice, it is performance on the latter that actually matters. Unfortunately, measuring this performance is difficult because there is no existing metric that defines the units in which to express an answer.
 
 Agility is a complex emergent cyber-physical property that depends
@@ -5,8 +6,8 @@ both on cyber properties such as latency, throughput, and accuracy of
 the \ooda~loop, as well as physical properties such as the drone's
 size, weight, thrust, lift, drag and moment of inertia.  Under benign
 conditions, a non-agile drone may do as well as an agile one.  Only
-under adversarial conditions does the cost of agility become valuable.
-This cost may include increased size, weight, and bandwidth/latency
+under adversarial conditions does agility become valuable.
+The cost to achieve this agility may include increased size, weight, and bandwidth/latency
 demand arising from the need to be faster and more accurate in sensing
 and actuation.  The only way to quantify this complex property is to
 stress a drone on a precisely-defined task in a reproducible
@@ -14,7 +15,7 @@ environment, and to use task-level metrics as surrogates for agility.
 This leads directly to the creation of benchmarks for evaluating
 autonomous drone agility.
 
-In this chapter, I define two agility benchmarks for measuring drone agility. The first benchmark embodies tracking of an object that moves in an unpredictable manner, with many abrupt changes. The adversarial aspect of this benchmark lies in the existence of an active mobile agent that randomly changes its trajectory. The second benchmark embodies obstacle avoidance in tight spaces. The adversarial aspect of this benchmark lies in the close proximity of obstacles, the need to sense them in real time (e.g., to account for wind effects), and occlusion that prevents full foreknowledge of the optimal flight path.  Both benchmarks are parameterized, thereby enabling many levels of difficulty within a common benchmark framework. In Section~\ref{sec:prior-work-benchmarks}, I discuss previous work related to real drone flight benchmarking in reactive scenarios, and how my work improves upon it. In Section~\ref{sec:avoidance}--\ref{sec:tracking-results}, I outline my benchmarks for object tracking and obstacle avoidance respectively and the results from my experiments using them.
+In this chapter, I define two agility benchmarks for measuring drone agility. The first benchmark embodies tracking of an object that moves in an unpredictable manner, with many abrupt changes. The adversarial aspect of this benchmark lies in the existence of an active mobile agent that randomly changes its trajectory. The second benchmark embodies obstacle avoidance in tight spaces. The adversarial aspect of this benchmark lies in the close proximity of obstacles, the need to sense them in real time (e.g., to account for wind effects), and occlusion that prevents full foreknowledge of the optimal flight path.  Both benchmarks are parameterized, thereby enabling many levels of difficulty within a common benchmark framework. In Section~\ref{sec:prior-work-benchmarks}, I discuss previous work related to real drone flight benchmarking in reactive scenarios, and how my work improves upon it. In Section~\ref{sec:avoidance}-\ref{sec:djiminipro}, I outline my benchmarks for object tracking and obstacle avoidance respectively and the results from my experiments using them.
 
 \section{Prior Work on Drone Benchmarks}
 \label{sec:prior-work-benchmarks}

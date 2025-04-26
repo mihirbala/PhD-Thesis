@@ -1,19 +1,75 @@
-SteelEagle, at its core, is born from the insight that commercial-off-the-shelf (COTS) photography drones present the best combination of light weight, low cost, accessibility, and programmability on the market. The majority of these drones are also close to or below international weight regulatory limits, permitting them to fly in populated environments without significant legal hurdles. I maintain that enabling full autonomy on such drones presents the best chance for widespread adoption of fully-autonomous drones in dense urban settings.
+The key factors of \textit{weight}, \textit{accessibility}, \textit{versatility}, \textit{portability}, and \textit{cost} all hinder autonomous drone development and deployment, yet no proposed system has solved all of these issues simultaneously. Clearly, significant research effort has been spent on solving these problems; so why does no such system exist? Central to the answer is what I call the \textit{onboard compute trade-off}. The onboard compute trade-off is a property of unmanned aerial platforms that claims:
 
-The first step in achieving this vision is providing real-time compute resources for these drones via edge computing. This is what enables full autonomy; sensor processing algorithms running at the edge give the drone an understanding of its surroundings, allowing it to make unsupervised decisions on how to proceed. In this chapter I will explain how to establish this connection between drones and the edge using only COTS components. In Sections~\ref{sec:achieving-cell-conn}-\ref{sec:quest-working-stream}, I will discuss the many failed prototypes I tested before arriving at an initial solution.
+\begin{displayquote}
+Traditional hardware, like CPUs and GPUs, offers the benefit of versatile, software portable, cost-effective compute power at the expense of weight. Specialized hardware offers the benefit of light weight at the expense of versatile, software portable, cost-effective compute power. Thus, in order to reduce weight, \textit{versatility, portability, and cost must be compromised}.
+\end{displayquote}
 
-\section{Design Goals}
+This fact has limited the development of lightweight fully-autonomous drones and it is chiefly responsible for the gap that exists in the drone market today. Unfortunately, even with recent technological advances, it is unclear whether this challenge can be solved. But, there may be ways it can be circumvented. 
+
+In this chapter, I will introduce SteelEagle, a drone autonomy system designed to bring intelligence to lightweight, commercial-off-the-shelf (COTS) drones. SteelEagle skirts the need for heavy onboard compute by leveraging edge computing, a computational model that involves offloading work from a less powerful device over a low latency network link to a nearby powerful device which finishes the work and returns the result. In this way, SteelEagle aims to solve the onboard compute trade-off and lower the weight-barrier to drone autonomy. In Section~\ref{sec:advent-edge}-\ref{sec:init-hardware}, I explain the background and prior research that drove the creation of SteelEagle. In Sections~\ref{sec:achieving-cell-conn}-\ref{sec:quest-working-stream}, I discuss the many failed prototypes I tested before arriving at an initial working solution.
+
+\section{The Advent of Edge Computing}
+\label{sec:advent-edge}
+Over the past few years, a new computational paradigm has emerged called \textit{edge computing}. Edge computing gives mobile devices access to strong computational resources at low latency by offloading to a network-proximal server~\cite{Satya2017}. In many ways, this is similar to cloud computing. The theory is that mobile devices will always be resource-poor compared to data centers. By sending compute jobs over the network, running on the vast compute of a data center, and getting the result back, mobile devices can mitigate their computational deficiencies. 
+
+The insight of edge computing is that some computation is \textit{latency-sensitive}. That is, the faster the result is returned to the user, the better the system performs. This is usually the case for interactive applications, like augmented reality, or for reactive applications, like robotic actuation in response to visual stimuli. In these cases, sending a compute job to the cloud may be too slow. Edge computing positions smaller groups of servers, called cloudlets, physically closer to mobile clients, usually co-located with cell towers. This hugely decreases latency without sacrificing much per-user compute power, since cloudlets, due to their smaller reach, have fewer tenants than cloud servers~\cite{Charyyev2020,Dolui2017}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\linewidth]{chapter3/FIGS/edge-computing.jpg}
+    \caption{Edge Computing Paradigm}
+    \label{fig:edge-computing}
+\end{figure}
+
+\section{Autonomous Drones and the Edge}
+\label{sec:drone-and-the-edge}
+Edge computing offers a compelling alternative to the onboard compute trade-off. Instead of miniaturizing compute to fly with a drone, it is much easier to relocate heavyweight compute to the edge so that it is accessible with low latency. This has a number of important advantages over traditional onboard computation paradigms:
+
+\begin{itemize}
+    \item The underlying hardware where compute runs is well-understood and general purpose (server-grade CPUs and GPUs). This hugely increases portability and offers a developer-friendly programming environment.
+    \item The cost of edge-enabled drones is low; there is no longer a need for expensive lightweight compute hardware, only a relatively cheap modem to communicate with the edge. This greatly increases scalability and thus the economic viability of drone swarms.
+    \item Server-grade compute power will always vastly exceed mobile compute power~\cite{Qi2012}. This opens the door to real-time inference of heavy models like transformers~\cite{Vaswani2017}.
+\end{itemize}
+
+An edge computing approach is not without its drawbacks. The drone is now fully reliant on its communication link with the cloudlet, meaning it is susceptible to service disruptions and bandwidth constraints. This is no worse than manually-piloted drones, which are also dependent on a communication link to the RPIC. Still, these factors must be accounted for in any successful edge-based drone system.
+
+Edge-enabled drones are not a new idea. For several years, researchers at the intersection of edge computing and robotics have published many influential papers on the topic~\cite{Wang2017,Bertizzolo2020,Asaamoning2021,Gharibi2016}. In
+these projects, drones use a ground station or cloudlet in conjunction with other nearby aircraft to offload high compute loads. However, this previous work either focused on the theory of how such a system should be designed or on solutions using custom components. None identified weight as a major constraint, and so they failed to present a practical, fully-functional system for public flight operations.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\linewidth]{chapter3/FIGS/simplearch.png}
+    \caption{SteelEagle Autonomy Model}
+    \label{fig:steeleagle-model}
+\end{figure}
+
+\section{SteelEagle: Inducing Autonomy on Lightweight Drones}
+\label{sec:se-intro}
+I introduce \textit{SteelEagle}, a drone-agnostic framework for inducing full autonomy on lightweight drones using edge computing. In contrast to previous work, SteelEagle is built on top of commercial-off-the-shelf (COTS), semi-autonomous, photography drones (\S\ref{sec:current-market}), which are supplemented with a 4G~\cite{ETSI} connection to the edge to provide the computation needed for fully-autonomous operation (Figure~\ref{fig:steeleagle-model}). COTS photography drones are typically cheaper, more accessible, and much lighter than fully-autonomous platforms. With this approach, SteelEagle presents the best of both worlds: lightweight, cheap drones with powerful real time computation capabilities. SteelEagle's backend also supports a plug-and-play approach, allowing developers to swap out underlying drone hardware form beneath its abstraction layer. This makes the system highly portable and versatile, able to adapt to the rapid pace of AI innovation. With respect to the challenges outlined earlier (\S\ref{sec:problems}), SteelEagle addresses them all:
+
+\begin{itemize}
+    \item \textbf{Weight}: SteelEagle is designed to work with lightweight, commercial-off-the-shelf (COTS) photography drones, many of which are under 400~g. These drones typically would be categorized as semi-autonomous, but edge offloading enables them to become fully autonomous.
+    \item \textbf{Accessibility}: COTS photography drones are designed to be accessible, since they are marketed to everyday consumers. Thus, they are much easier to work with and safer to fly. In addition, the programming environment and abstractions provided by SteelEagle make it easy to develop new drone applications.
+    \item \textbf{Versatility}: SteelEagle's edge backend runs on traditional compute hardware which ensures maximum versatility and full access to popular AI libraries like PyTorch. This encourages rapid development and evolution through preexisting AI tool chains. It also eliminates the  need to squeeze models onto constrained drone hardware.
+    \item \textbf{Portability}: SteelEagle abstracts away drone-facing hardware and has no restrictions on the drone control stack. This promotes portability and makes SteelEagle drone-agnostic.
+    \item \textbf{Cost}: COTS photography drones are some of the most cost-optimized drones on the market, due to their target mass-market audience. As a result, the unit cost for SteelEagle drones can be several orders of magnitude lower than typical fully-autonomous platforms.
+\end{itemize}
+
+As with all edge-based systems, SteelEagle must plan for and adapt to changing network environments. More critically, its performance on common drone tasks like object tracking and obstacle performance must come close to matching that of existing autonomous drones to be useful, despite bandwidth and latency challenges inherent in offloading solutions.
+
+\section{Design Goals of SteelEagle}
 Establishing a connection to the edge on any current COTS drone hardware is non-trivial. Doing so on a COTS photography drone is near impossible out-of-the-box. This is the case for the following reasons:
 \begin{itemize}
     \item Photography drones are tightly-integrated, black boxes with no ability to change onboard software or hardware. This is because they are meant to be used by novice pilots and so they simplify the user experience at the cost of customizability.
     \item Photography drones usually require a constant connection to the pilot via a controller. This not only mandates a human-in-the-loop but also prevents BVLOS operation.
-    \item Photography drones are not designed to carry much payload beyond their stock hardware. They provide no means to power any payload either since their batteries are closed off during flight.
+    \item Photography drones are not designed to carry much payload. They provide no means to power any payload either since their batteries are closed off during flight.
 \end{itemize}
 These are challenges that any prototype must overcome, regardless of underlying drone platform.
-\newpage
-For SteelEagle, drones connect to the edge over public 4G/5G cellular. Cellular has excellent coverage in populated areas and has favorable penetration characteristics~\cite{FCC}. This ensures good service wherever SteelEagle drones fly, especially in urban or suburban settings. Unfortunately, at the time of writing this dissertation, no lightweight COTS photography drones are equipped with cellular connectivity; they are designed to be operated within visual line-of-sight of a pilot, a task for which WiFi or RC is well-suited. For my prototype to work, I will have to bring cellular connectivity to a COTS drone without modifying its internal components.
 
-\subsection{Hardware}
+For SteelEagle, drones connect to the edge over public 4G/5G cellular. Cellular has excellent coverage in populated areas, support for device mobility, and favorable penetration characteristics~\cite{FCC}. This ensures good service wherever SteelEagle drones fly, especially in urban or suburban settings. Unfortunately, at the time of writing this dissertation, no lightweight COTS photography drones are equipped with cellular connectivity; they are designed to be operated within visual line-of-sight of a pilot, a task for which WiFi or RC is well-suited. For my prototype to work, I will have to bring cellular connectivity to a COTS drone without modifying its internal components.
+
+\section{Initial Hardware}
+\label{sec:init-hardware}
 For my initial prototype, I chose to work with the Parrot Anafi~\cite{ParrotAnafi}. The Anafi is a COTS photography drone that weighs 320~g and costs \$470. It is equipped with an autopilot that can follow GPS waypoints and perform automatic stabilization. This stabilization involves increasing thrust of rotors to compensate for wind, allowing the drone to maintain its position even in windy conditions. Table~\ref{tab:anafi-features} shows a more detailed specification of the aircraft.
 
 \begin{figure}
@@ -47,26 +103,23 @@ For my initial prototype, I chose to work with the Parrot Anafi~\cite{ParrotAnaf
      Connectivity & WiFi \\
      \hline
     \end{tabular}
-    \begin{captext}
-    \\[0.1cm] \small * Drone autopilots manage the low-level control systems onboard, e.g. the ESCs. They usually have the ability to follow GPS waypoints and auto-stabilize under windy conditions. Popular autopilots are ArduPilot and PX4~\cite{Ardupilot,PX4}.
-    \end{captext}
     \caption{Parrot Anafi Specifications}
     \label{tab:anafi-features}
 \end{table}
 
-\subsubsection{Control Scheme}
+\subsection{Control Scheme}
 The Anafi is designed to be controlled by a human pilot using a remote controller with an attached mobile phone (the Parrot Skycontroller) or exclusively using a mobile phone over WiFi. Alternatively, the drone can also be controlled over WiFi with a Python API called Parrot Olympe or an Android API called Parrot GroundSDK. They are based on the ubiquitous MAVLink protocol~\cite{MAVLink}. Both these APIs grant users high-level flight control and access to telemetry.
 
-Olympe and GroundSDK support two main command types: manual and guided. Manual commands directly actuate the drone. For instance, moving the left stick upwards on the controller would send a manual command to ``increase vertical throttle''. Guided commands, on the other hand, provide the drone with a target to actuate towards. For example, a ``move to this GPS location'' message is a guided command since the drone controls its own actuation towards the specified target.
+Olympe and GroundSDK support two main command types: manual and guided. Manual commands directly actuate the drone. For instance, moving the left stick upwards on the controller would send a manual command to ``increase throttle''. Guided commands, on the other hand, provide the drone with a target to actuate towards. For example, a ``move to GPS location'' message is a guided command since the drone self-actuates towards the specified target.
 
-\subsubsection{Networking}
+\subsection{Networking}
 The drone hosts a WiFi network which supports up to two attached clients. A controller must connect to the WiFi network in order to talk to the drone. This channel may be configured to be either 2.4~GHz or 5~GHz. As reported by Parrot, the connection range of the WiFi channel is around 4~km~\cite{ParrotAnafi}. From my testing, this can fall to around 0.5~km in areas with high wireless interference.
 
-\subsubsection{Video Stream}
+\subsection{Video Stream}
 A 720p 30fps video stream is generated by the drone and transmitted on its WiFi network via the real-time streaming protocol (RTSP)~\cite{RTSP}. The settings of this stream are not configurable. It is encoded using an intra-refresh slice-decode scheme which is designed to be resilient to packet loss~\cite{Cloudinary}. I will cover the drone's video stream in more detail in Section~\ref{sec:anatomy-drone-stream}.
 
-\subsubsection{Magnetometer}
-Most drones are equipped with a magnetometer for discerning bearing. The Parrot Anafi is no exception, though it has an unusually sensitive magnetometer. If the drone's magnetometer detects sufficient interference (e.g. caused by nearby ferromagnetic material~\cite{Ardupilot}), it refuses to fly any guided commands and cancels any guided actuation. This is for safety; if the drone does not have an accurate understanding of its bearing, it may not actuate correctly towards its target and therefore increase the probability of a crash.
+\subsection{Magnetometer}
+Most drones are equipped with a magnetometer for discerning bearing. The Parrot Anafi has an unusually sensitive magnetometer. If the drone's magnetometer detects sufficient interference (e.g. caused by nearby ferromagnetic material~\cite{Ardupilot}), it refuses to fly any guided commands and cancels any guided actuation. This is for safety; if the drone does not have an accurate understanding of its bearing, it may not actuate correctly towards its target and therefore increase the probability of a crash.
 
 \section{Achieving Cellular Connectivity}
 \label{sec:achieving-cell-conn}
@@ -141,18 +194,27 @@ Memory & 1.5~GB & 3~GB & 6~GB\\
 \label{tab:austerity}
 \end{figure}
 
-\subsection{Anatomy of the Drone Video Stream}
+\section{Anatomy of the Parrot Anafi Video Stream}
 \label{sec:anatomy-drone-stream}
 The Parrot Anafi produces an encoded 720p 30fps video stream. It is produced on the drone's hardware and thus \textit{cannot be modified}. It is generated over the drone's WiFi network and can only be consumed by a single client on the network. Unlike most video streams, this stream uses an \textit{intra-refresh slice-decode} encoding scheme. An intra-refresh slice-decode encoding scheme is a streaming paradigm designed to minimize the visual impact of packet loss. 
 
-To understand this special encoding scheme, first consider a normal H.264 video stream. The encoding scheme for these streams involves two types of data: complete frames (I frames) and inter frames (P and B frames). A complete frame is a full photo capture of a moment in time. When a complete frame is transmitted, it requires no additional data to decode. The trade-off is that complete frames are bandwidth hungry. An individual 720p complete frame can be several
-KBs of data. By contrast, inter frames only capture the \textit{change from the previous frame}. They require reference data in order to decode, and are meaningless on their own. Their advantage is that they are very bandwidth efficient, sometimes on the order of a few hundred bytes in size. An H.264 video stream operates by transmitting a complete frame followed by a set amount of inter frames before looping back. This preserves fidelity by smoothing out gaps between complete frames with inter frames but also preserves bandwidth by sparingly transmitting complete frames.
+To understand this special encoding scheme, first consider a normal H.264 video stream. The encoding scheme for these streams involves two types of data: complete frames (I frames) and inter frames (P and B frames). A complete frame is a full photo capture of a moment in time. When a complete frame is transmitted, it typically requires no additional data to decode. The trade-off is that complete frames are bandwidth hungry. An individual 720p complete frame can be several KBs of data. By contrast, inter frames only capture the \textit{change from the previous frame}. They require reference data in order to decode, and are meaningless on their own. Their advantage is that they are very bandwidth efficient, sometimes on the order of a few hundred bytes in size. An H.264 video stream operates by transmitting a complete frame followed by a set amount of inter frames before looping back. This preserves fidelity by smoothing out gaps between complete frames with inter frames but also preserves bandwidth by sparingly transmitting complete frames.
 
-There is one major negative of typical H.264 video streams in the context of mobile devices: they are not resilient to packet loss. On the Internet, which is a mostly wired network, this is not a serious problem. But, over the air, packet loss is frequent. If a complete frame is lost, this kind of stream must shut down until a new one can be broadcast; all following inter frames will have no complete frame to refer to and will be rendered useless. Usually this can take a whole second or more, during which a drone pilot, for example, would not be able to see.
+There is one major negative of typical H.264 video streams in the context of mobile devices: they are not resilient to packet loss. On the Internet, which is a mostly wired network, this is not a serious problem. But, over the air, packet loss is frequent. If a complete frame is lost, viewing or processing of this kind of stream must be skipped until a new complete frame can be broadcast; all following inter frames will have no complete frame to refer to and will be rendered useless. Usually this can take a whole second or more, during which a drone pilot, for example, would not be able to see.
 
 An intra-refresh slice-decode scheme takes a different approach. Instead of complete frames and inter frames, this scheme splits a single frame into \textit{slices}. These slices capture a sliver of data horizontally across a frame. When a frame is transmitted, the encoder allocates one slice to be the ``complete slice'' (I slice) and the rest to be ``inter slices'' (P slices). Figure~\ref{fig:slice-encoding} shows a breakdown of how each set of frames transmitted by the Anafi are organized. Each inter slice is only dependent upon its section of the frame; they are completely independent of each other. 
 
 This has two positive attributes. The first is that this minimizes the impact of packet loss on a single frame. If a single frame is dropped, only one slice of the frame loses its complete slice reference. In this case, that section of the frame is corrupted until a new complete slice is sent. Otherwise, the rest of the frame is decoded normally. The second benefit of this approach is that it keeps bandwidth usage consistent. With a traditional stream, bandwidth usage spikes when complete frames are sent but then plummets when inter frames are sent. In this scheme, since every frame has approximately the same size (one complete slice with the rest being inter slices), bandwidth usage stays somewhat constant. This is useful because other applications can now plan around its tight usage bound.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\linewidth]{chapter3/FIGS/compression.png}
+    \begin{captext}
+    \\[0.1cm] \small I frames are full frames which are interleaved with partial frames called P frames and B frames. These are frames that contain predicted motion based on previous frames and future frames within the transmission buffer.
+    \end{captext}
+    \caption{Video Compression Frame Types (Adapted from \cite{Wikipedia})}
+    \label{fig:compression-demo}
+\end{figure}
 
 \begin{figure}
     \centering
@@ -164,10 +226,10 @@ This has two positive attributes. The first is that this minimizes the impact of
     \label{fig:slice-encoding}
 \end{figure}
 
-\subsection{The Video Stream on the Watch}
-There are two obvious methods for offloading the drone video stream from the watch to the edge. The first is to decode the drone stream on the watch and then ship the decoded frames to the edge. This allows the watch to throttle its send rate to account for 4G transmission overheating. The second is to directly offload the stream packets from the drone network to the cloudlet, where they can then be decoded. This involves the least amount of computation power on the watch, but requires a higher transmission rate. I will refer to these as method 1 and method 2 respectively.
+\section{Processing The Video Stream on the Watch}
+There are two obvious methods for offloading the drone video stream from the watch to the edge. The first is to decode the drone stream on the watch and then ship the decoded frames to the edge. This allows the watch to throttle its send rate to account for 4G transmission overheating. The second is to directly offload the stream packets from the drone network to the cloudlet, where they can then be decoded. This involves the least amount of computation power on the watch, but requires a higher transmission rate. I will refer to these as decode-on-device and decode-on-edge respectively.
 
-\subsubsection{Method 1: Decode-on-Device}
+\subsection{Method 1: Decode-on-Device}
 \label{sec:method-1}
 Decode-on-device involves the watch decoding the drone video stream then sending decoded frames individually to the edge. This allows for some pre-processing on the watch side, such as downscaling or stream throttling for bandwidth saving. Unfortunately, the Anafi's intra-refresh slice-decode stream poses a major hurdle to this method's success: due to its construction, \textit{every frame must be decoded in order to maintain a coherent stream}. This is in stark contrast to a typical stream, which only requires the I frames (usually generated at around 1~fps) to be decoded to maintain coherence. As such, any device consuming the drone stream must decode one frame every 33~ms on average to keep up with the 30~fps output and prevent drifting latency, regardless of cellular transmission throughput. Drifting latency is a phenomenon where latency increases over time due to queueing delay. If a device drops packets to keep up with this strict time bound, it could cause some loss of quality as important I slices are discarded. On most devices, this is not an issue. But on the constrained compute of the Galaxy Watch 4, even relatively light workloads are considered difficult. Table~\ref{tab:decoding-time} shows the time taken to decode a frame of the Anafi's video stream by the watch, the Pixel 4a, and the Unihertz Jelly Pro. As shown, both the watch and the Jelly Pro cannot decode fast enough to maintain stable latency.
 
@@ -214,9 +276,9 @@ Interval & 35~KB& 100~KB\\
 \label{tab:thermal-sensitivity}
 \end{table}
 
-\subsubsection{Method 2: Pass-Through Streaming}
+\subsection{Method 2: Decode-on-Edge}
 \label{sec:method-2}
-An easy way to avoid decoding on device is to directly send the drone stream packets over cellular to the cloudlet, where they can then be decoded. With this method, computation on the device is minimal but network transmission is much more frequent. This is a good tradeoff in many cases, but on the watch, heavy transmission workloads may cause overheating. To determine the effect of transmission on the watch thermals, I devised a simple experiment: the watch sends a variable size packet, representing typical stream packet sizes (35KB up to 100KB), over the network with variable sleep times in between sends. There is no video stream or other onboard computation involved, only raw transmission. Table~\ref{tab:thermal-sensitivity} shows the results of this experiment. It is clear that the bottleneck on the watch is not the packet size but the send rate. Any send rate above 1~Hz causes thermal shutdown. This means that pass-through streaming is mostly out of the question.
+Decode-on-edge avoids decoding on device by directly sending the drone stream packets over cellular to the cloudlet, where they can then be decoded. With this method, computation on the device is minimal but network transmission is much more frequent. This is a good tradeoff in many cases, but on the watch, heavy transmission workloads may cause overheating. To determine the effect of transmission on the watch thermals, I devised a simple experiment: the watch sends a variable size packet, representing typical stream packet sizes (35KB up to 100KB), over the network with variable sleep times in between sends. There is no video stream or other onboard computation involved, only raw transmission. Table~\ref{tab:thermal-sensitivity} shows the results of this experiment. It is clear that the bottleneck on the watch is not the packet size but the send rate. Any send rate above 1~Hz causes thermal shutdown. This means that decode-on-edge streaming is mostly out of the question.
 
 \begin{figure}
     \centering
@@ -236,11 +298,11 @@ A successful stream to the cloudlet must have acceptable latency, throughput, an
     \item \textbf{Stable Latency}: the watch stream must process frames on average equal to or faster than 33~ms to keep up with the 30~fps stream from the drone.
     \item \textbf{High-Quality Frames}: the watch stream must deliver ``quality'' images to the cloudlet that lack significant visual artifacts and can thus be used by computer vision algorithms.
 \end{itemize}
-The austere environment on the watch makes achieving such a stream a challenge. The watch cannot decode frames fast enough to maintain stable latency, and thus cannot decode-on-device and send at a throttled framerate. It also cannot transmit consistently enough to pass-through stream from the drone to the cloudlet without decoding. To discover a path forward, I devised a set of experiments that would better characterize the bottlenecks in the system. By understanding these bottlenecks, an effective solution could be found.
+The austere environment on the watch makes achieving such a stream a challenge. The watch cannot decode frames fast enough to maintain stable latency, and thus cannot decode-on-device and send at a throttled framerate. It also cannot transmit consistently enough to decode-on-edge. To discover a path forward, I devised a set of experiments that would better characterize the bottlenecks in the system. By understanding these bottlenecks, an effective solution could be found.
 
 \subsection{Experimental Setup}
 \label{sec:streaming-experiment-setup}
-For each of the following experiments, the setup is identical. The drone is started so that its RTSP stream and WiFi network are initialized. Then, the client device is connected to the drone’s WiFi network and the stream application is launched on the device. The application uses a variable method to stream image data from the drone to a cloudlet. When the frame arrives at the cloudlet, it is saved along with its time of arrival. The drone’s camera is pointed at a screen connected directly to the cloudlet which is displaying the current UNIX timestamp. By comparing the UNIX timestamp in the received image and its time of arrival, the transmission latency can be determined in post processing. The UNIX timestamp can also be used to determine the time at which thermal shutdown occurs. Figure~\ref{fig:streaming-experiment} shows the experimental setup. For experiment 1 and 2, I provide two other devices, the Google Pixel 4a and the Unihertz Jelly Pro as baselines. The duration of the experiments in all cases is the duration of a drone flight: 20 minutes.
+For each of the following experiments, the setup is identical. The drone is started so that its RTSP stream and WiFi network are initialized. Then, the client device is connected to the drone’s WiFi network and the stream application is launched on the device. The application uses a variable method to stream image data from the drone to a cloudlet. When the frame arrives at the cloudlet, it is saved along with its time of arrival. The drone’s camera is pointed at a screen connected directly to the cloudlet which is displaying the current UNIX timestamp. This effectively timestamps each frame produced by the drone, a feature not present in the closed source stream hardware. By comparing the UNIX timestamp in the received image and its time of arrival, the transmission latency can be determined in post processing. The UNIX timestamp can also be used to determine the time at which thermal shutdown occurs. Figure~\ref{fig:streaming-experiment} shows the experimental setup. For experiment 1 and 2, I provide two other devices, the Google Pixel 4a and the Unihertz Jelly Pro as baselines. The duration of the experiments in all cases is the duration of a drone flight: 20 minutes.
 
 \begin{table}
 \centering
@@ -266,11 +328,11 @@ Google Pixel 4a & \cellcolor{green!20}DNO & \cellcolor{green!20}DNO & \cellcolor
 
 \subsection{Experiment 1: Sustainability}
 \label{sec:exp1-sustainability}
-In this experiment, I timed each device running either decode-on-device (Method 1~\S\ref{sec:method-1}) or pass-through (Method 2~\S\ref{sec:method-2}). For the decode-on-device runs, I added additional tests with throttling. In these cases, the device decodes at the full frame rate but only sends to the cloudlet at the specified framerate. Table~\ref{tab:time-before-overheating} shows the results of the experiment. The watch clearly cannot sustain pass-through streaming for any significant duration (about 1 minute), and can sustain non-throttled and 3~fps throttled streaming for up to 9 minutes.  However, the 1~fps throttled stream did not overheat for the duration of the test. This implicates 4G transmission as the main thermal bottleneck and sets an upper-bound for transmission frequency at 1~Hz. The Google Pixel 4a, unsurprisingly, breezed through all four tests. The Jelly Pro had trouble with the higher send rate of some decode-on-device tests but was overall good. This shows that slightly better thermals would drastically improve sustainable performance on the watch. 
+In this experiment, I timed each device running either decode-on-device~\S\ref{sec:method-1} or decode-on-edge ~\S\ref{sec:method-2}. For the decode-on-device runs, I added additional tests with throttling. In these cases, the device decodes at the full frame rate but only sends to the cloudlet at the specified framerate. Table~\ref{tab:time-before-overheating} shows the results of the experiment. The watch clearly cannot sustain decode-on-edge streaming for any significant duration (about 1 minute), and can sustain non-throttled and 3~fps throttled streaming for up to 9 minutes.  However, the 1~fps throttled stream did not overheat for the duration of the test. This implicates 4G transmission as the main thermal bottleneck and sets an upper-bound for transmission frequency at 1~Hz. The Google Pixel 4a, unsurprisingly, breezed through all four tests. The Jelly Pro had trouble with the higher send rate of some decode-on-device tests but was overall good. This shows that slightly better thermals would drastically improve sustainable performance on the watch. 
 
 
 \subsection{Experiment 2: Stable Latency}
-In this experiment, I setup each device running the same methods as in Section~\ref{sec:exp1-sustainability}. This time, I measured the stream latency over the course of the test. Table~\ref{tab:stable-latency} shows the results of the experiment. No method provided a stream with stable latency on the watch. On the Jelly Pro, only the 1~fps throttled stream did. This implies that for the non-throttled and 3~fps throttled stream, the network transmission affected the decoding performance, slowing it down and causing latency to drift. On the Pixel 4a, all decode-on-device methods provided stable latency. No device successfully performed pass-through streaming without drift. Clearly, a different approach is needed on the watch to guarantee consistent latency.
+In this experiment, I setup each device running the same methods as in Section~\ref{sec:exp1-sustainability}. This time, I measured the stream latency over the course of the test. Table~\ref{tab:stable-latency} shows the results of the experiment. No method provided a stream with stable latency on the watch. On the Jelly Pro, only the 1~fps throttled stream did. This implies that for the non-throttled and 3~fps throttled stream, the network transmission affected the decoding performance, slowing it down and causing latency to drift. On the Pixel 4a, all decode-on-device methods provided stable latency. No device successfully performed decode-on-edge streaming without drift. Clearly, a different approach is needed on the watch to guarantee consistent latency.
 
 \begin{table}
 \centering
@@ -288,7 +350,7 @@ Google Pixel 4a & \cellcolor{red!20}DRIFT & \cellcolor{green!20}1~s & \cellcolor
 \hline
 \end{tabular}
     \begin{captext}
-    \\[0.1cm] \small Latency in seconds. DRIFT means that the latency drifted over the duration of the experiment (20~minutes).
+    \\[0.1cm] \small Latency in seconds. DRIFT means that the latency increased over the duration of the experiment (20~minutes).
     \end{captext}
 \caption{Experiment 2: Stable Latency}
 \label{tab:stable-latency}
@@ -317,7 +379,7 @@ $d = 4$ & $\leq$ 5\% & 1~s, 50\% &	1~s, 10\% & 6~s, 30\% \\[0.1cm]
 \end{table}
 
 \subsection{Experiment 3: High-Quality Frames}
-If the watch decodes the stream as outlined in Method 1~\S\ref{sec:method-1}, it produces very high-quality images with no visual artifacts at the cost of drifting latency. This is not acceptable by the standards outlined earlier in Section~\ref{sec:quest-working-stream}. Even so, room for compromise remains. While not desirable, intentional packet dropping of the video stream prior to decoding is an effective way to reduce latency at the cost of quality, since fewer stream packets reduces the time spent decoding. In this experiment, I determine how much packet dropping is acceptable to preserve quality. I test the watch under the 1~fps throttled decode-on-device workload, decoding chunks of $c$ packets and then subsequently dropping $d$ packets. For example, a $c=2, d=2$ scheme would involve decoding 2 out of every 4 packets. Table~\ref{tab:hq-frames} shows the results of the experiment. As $d$ increases, quality drops but latency decreases as the average time to decode shrinks. In the other direction, as $c$ increases, latency generally increases too since the average time to decode grows. At $c=2, d=3$, there is a sweet-spot where the watch latency is minimal and the impact on frame quality is also minimal. It is this combination that finally produces a workable stream.
+If the watch decodes the stream as outlined in~\S\ref{sec:method-1}, it produces very high-quality images with no visual artifacts at the cost of drifting latency. This is not acceptable by the standards outlined earlier in Section~\ref{sec:quest-working-stream}. Even so, room for compromise remains. While not desirable, intentional packet dropping of the video stream prior to decoding is an effective way to reduce latency at the cost of quality, since fewer stream packets reduces the time spent decoding. In this experiment, I determine how much packet dropping is acceptable to preserve quality. I test the watch under the 1~fps throttled decode-on-device workload, decoding chunks of $c$ packets and then subsequently dropping $d$ packets. For example, a $c=2, d=2$ scheme would involve decoding 2 out of every 4 packets. Table~\ref{tab:hq-frames} shows the results of the experiment. As $d$ increases, quality drops but latency decreases as the average time to decode shrinks. In the other direction, as $c$ increases, latency generally increases too since the average time to decode grows. At $c=2, d=3$, there is a sweet-spot where the watch latency is minimal and the impact on frame quality is also minimal. It is this combination that finally produces a workable stream.
 
 \begin{figure}
     \centering
@@ -343,5 +405,5 @@ Putting together the results of the three experiments, a working solution emerge
 \end{itemize}
 Integrated into the larger application, parts of this streaming scheme must be modified to make way for other compute resources. In particular, throttling to 1~fps proves too demanding once other processes are factored in. Once throttling is dropped to 0.7~fps, the stream once again is functional. Figure~\ref{fig:temperature} shows the watch temperature over time with a 2~fps and a 0.7~fps throttled stream within the larger application. At 2~fps, the stream experiences thermal shutdown once the watch reaches an external temperature of 108\degree F. At 0.7~fps, the watch maintains an external temperature under 105\degree F for 20 minutes without ever experiencing a thermal shutdown.
 
-With the stream now working, the Parrot Anafi has successfully been connected to the edge via its Galaxy Watch 4 payload. The watch can offload the drone's video stream over 4G at 0.7~fps with 1~s latency while simultaneously sending actuation commands. The drone can also operate BVLOS without the need for any connected human pilots. Now, all that is needed is a complementary edge software backend that can provide the drone with the intelligence required for full autonomy.
-
+\section{Summary}
+The core insight of SteelEagle is that heavy onboard compute can be avoided by offloading computation from drones over a cellular network to a cloudlet. As a first demonstration of this concept, I successfully connected the Parrot Anafi to a cloudlet via the Galaxy Watch 4. The watch, despite its thermal constraints, can offload the drone's video stream over 4G at 0.7~fps with 1~s latency while simultaneously sending actuation commands. The drone can also operate BVLOS without the need for any connected human pilots. Now, all that is needed is a complementary edge software backend that can provide the drone with the intelligence required for full autonomy.

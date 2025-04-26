@@ -41,7 +41,7 @@ reduction is important to quantify, as it directly impacts my
 platform's range and practicality. In Figure~\ref{fig:battery}, I
 show the hover time of the Parrot Anafi with a 0~g, 40~g, and 60~g
 payload weight. The Galaxy Watch with harness is around a 40~g
-payload.
+payload. It is clear that the watch payload reduces battery life by $10\%$ to $20\%$ on average.
 
 \begin{table}
 	\centering
@@ -143,7 +143,7 @@ different route segments.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.2\linewidth]{chapter4/FIGS/robomaster.jpg}\\
+\includegraphics[width=0.4\linewidth]{chapter4/FIGS/robomaster.jpg}\\
 {\footnotesize 432~x~330~x~304~mm\\[-0.05in]
 \noindent(17~x~13~x~12~in)}
 \caption{COTS Target}
@@ -235,7 +235,7 @@ tude&\multicolumn{2}{c|}{Truth}& Pos& Neg.\\
 \hline
 \end{tabular}\\[0.05in]
 {\footnotesize Threshold = 0.7}\\
-(a) Confusion Matrix\\
+(a) Detection Results\\
 \end{minipage}
 \begin{minipage}[b]{1.4in}
 \centering
@@ -268,7 +268,7 @@ them are correctly detected~(TPs).  There are 30~FNs and 5~FPs.  At
 frames, all are GT-positive.  However, only 24 of them are correctly
 detected~(TPs).  There are 48~FNs and 13~FPs.
 Table~\ref{tab:task1-results}~(b) shows the precision and recall
-resulting from this confusion matrix.  These values are excellent at
+resulting from these detection results.  These values are excellent at
 5~m.  Recall is noticeably degraded at 10~m.  Both precision and
 recall suffer at 15~m.  These results suggest the importance of active
 vision. Dropping to a lower altitude could confirm
@@ -342,7 +342,7 @@ approach provides a good baseline at low complexity.
 	\begin{tabular}{|c|c|c|c|c|c|c|}
 		\hline
 		 &  &  & \multicolumn{2}{c|}{Success} & Slow & \\
-		Delay & Run & Total  & \multicolumn{2}{c|}{\footnotesize (Target Present)} & Act- &  Fail\\
+		Occlusion & Run & Total  & \multicolumn{2}{c|}{\footnotesize (Target Present)} & Act- &  Fail\\
 		\cline{5-5} 
 		(s)&  &       Frames  &         & $\rm \frac{Present}{Total}$ & uation  & \\ 
 		\hline
@@ -362,12 +362,12 @@ approach provides a good baseline at low complexity.
 	\begin{captext}
 		\centering \\[0.1cm] \small Figures in parentheses are standard deviations. \\
 	\end{captext}
-{(a) My Platform}\\[0.2in]
+{(a) SteelEagle}\\[0.2in]
 
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
 		 &  &  & \multicolumn{2}{c|}{Success} & Slow & \\
-Delay & Run & Total  & \multicolumn{2}{c|}{\footnotesize (Target Present)} & Act- &  Fail\\
+Occlusion & Run & Total  & \multicolumn{2}{c|}{\footnotesize (Target Present)} & Act- &  Fail\\
 \cline{5-5} 
 (s)&  &       Frames  &         & $\rm \frac{Present}{Total}$ & uation  & \\ 
 \hline
@@ -556,7 +556,7 @@ Speed & Run & Total & \multicolumn{2}{c|}{Success} & Slow & Fail\\
 \begin{captext}
 \centering \\[0.1cm] Figures in parentheses are standard deviations. \\
 \end{captext}
-\caption{Task-3 Results {\footnotesize (Altitude = 5~m, Pattern = Cross)}}
+\caption{Task-3 Results {\small (Altitude = 5~m, Pattern = Cross)}}
 \label{tab:task3-results-5m-cross}
 \end{table}
 
@@ -585,7 +585,7 @@ Speed & Run & Total & \multicolumn{2}{c|}{Success} & Slow & Fail\\
 	\begin{captext}
 		\centering \\[0.1cm] Figures in parentheses are standard deviations. \\
 	\end{captext}
-	\caption{Task-3 Results {\footnotesize (Altitude = 10~m, Pattern = Square)}}
+	\caption{Task-3 Results {\small (Altitude = 10~m, Pattern = Square)}}
 	\label{tab:task3-results-10m-square}
 \end{table}
 
@@ -631,7 +631,7 @@ anomaly mentioned earlier.
 	\begin{captext}
 		\centering \\[0.1cm] Figures in parentheses are standard deviations. \\
 	\end{captext}
-	\caption{Task-3 Results {\footnotesize (Altitude = 10~m, Pattern = Cross)}}
+	\caption{Task-3 Results {\small (Altitude = 10~m, Pattern = Cross)}}
 	\label{tab:task3-results-10m-cross}
 \end{table}
 
@@ -719,7 +719,7 @@ capture a trace of the drone's flight path across 3 different runs.
 \begin{minipage}[b]{0.495\linewidth}
 \centering
 \includegraphics[width=0.95\linewidth]{chapter4/FIGS/fig-obstacle-path-ours.png}
-{(a) My Platform}
+{(a) SteelEagle}
 \end{minipage}
 \begin{minipage}[b]{0.495\linewidth}
 \centering
@@ -769,7 +769,7 @@ together enable it to be much less conservative in obstacle avoidance.
 The flight paths cluster more tightly around the obstacle, and the drone
 soon returns to its original flight path.
 
-\subsection{Summary of Results}
+\section{Summary of Results}
 \label{sec:take-away}
 
 My evaluation began with a single top-level question.  Could
@@ -795,7 +795,7 @@ front would also enable the superior resources of the cloudlet to be better
 utilized.  Right now, the benefit of the cloudlet is being muted by the low
 sustainable offloading rate. Even so, thanks to the modular design of SteelEagle, it is still possible to port new AI algorithms with minimum effort into the pipeline which could perform better on this limited stream.
 
-\subsection{Benefit of Increased Frame Rate}
+\section{Benefit of Increased Frame Rate}
 \label{sec:discussion-results}
 
 The results for Task-3~(\S\ref{sec:task3}) make it clear that the
@@ -916,7 +916,7 @@ laptop can decode video and transmit it over WiFi at 30~fps, the
 bottleneck shifts to the LTE link and the cloudlet's DNN inference
 time.  As Table~\ref{tab:cloudlet-perf} shows, the cloudlet is able
 to inference at roughly 17.8~fps for object detection~(Task-1 to
-Task-4) and 8.1~fps on obstacle avoidance~(Task-5). Thus, an improved offload device on the drone could take better advantage of cloudlet resources.
+Task-4) and 8.1~fps on obstacle avoidance~(Task-5). Thus, an improved offload device on the drone could take better advantage of cloudlet resources. In the next chapter, I explore possible replacement devices for the watch in order to quantify this improvement.
 
 
 

@@ -1,4 +1,4 @@
-\section{Obstacle Avoidance: Benchmark}
+\section{Obstacle Avoidance Benchmark}
 \label{sec:avoidance}
 Obstacle avoidance is vital for drone flights at low altitude (up to a
 few hundred feet) in urban or forested settings. Otherwise, being restricted to only high altitude flight impairs visual detections and hides many details.  The most dangerous obstacles are
@@ -19,16 +19,9 @@ benchmark.
 
 \subsection{Benchmark Requirements}
 \label{sec:avoidance-requirements}
-
-A good benchmark for this task should capture the essential difficulty
-of obstacle avoidance.  It should be parameterized, so that it is easy to
-vary the difficulty of the benchmark.  The benchmark should only use
-standardized, off-the-shelf components that can be easily purchased or
-fabricated.  There should be no ambiguity in the experimental setup or
-interpretation of results, thereby simplifying independent attempts to
-reproduce published experimental results.
-\S\ref{sec:avoidance-description} presents my candidate benchmark
-that meets these requirements.
+The benchmark requirements for avoidance are similar to those described for tracking (\S\ref{sec:tracking-requirements}). Parameterization that controls the difficulty of the task is valuable. Use
+of standardized, off-the-shelf components and careful attention to reproducibility of results are
+important. Capturing the essential difficulty of the task is vital.
 
 \subsection{Benchmark Description}
 \label{sec:avoidance-description}
@@ -156,6 +149,8 @@ DPT Large prioritizes accuracy above all else.  Figure
 \ref{tab:midas-model-stats} shows the inference latency and throughput
 of these three models on my cloudlet.  I explore the use of all three in my experiments.
 
+\subsection{Experimental Setup}
+The experimental setup for this benchmark is identical to that in Section~\ref{sec:experimental-setup-tracking}.
 
 \section{Obstacle Avoidance: Results}
 \label{sec:avoidance-results}
@@ -190,24 +185,27 @@ $w$ is increased from 2~m to 3~m, Figure~\ref{fig:avoid-best} shows
 the score improving from 0.13 to 0.2.  This confirms my expectation
 that less challenging courses are faster to traverse.
 
-Since humans are the standard against which AI systems are measured,
-I ask how a human pilot does under identical conditions. To
-explore this, an experienced RPIC with several dozen hours of flight
-time on the Parrot ANAFI platform manually executed the benchmark for
-the same values of $w$. The \ooda~loop is now cyber-human: the RPIC uses the drone's live video stream to manually fly it.  Of course, a human also
+As in the case of obstacle avoidance, I ask how well an experienced
+human pilot performs under identical conditions. To
+explore this, I again piloted the drone through the benchmark. Of course, a human also
 has foreknowledge of the obstacle course and can subconsciously
 leverage that knowledge in planning the drone's flight.  In contrast,
 the autonomous drone is purely reactive --- what it sees right now is
-all that it knows.
+all that it knows. This is a limitation of the benchmark, since it cannot tease apart the effects of agility versus better path planning.
 
 Figure~\ref{fig:avoid-human} presents my results.  Relative to
 unimpeded traversal of the course, the scores of 0.76 to 0.46 show
-that even the RPIC suffers a slowdown.  However, the slowdown is much
+that even I suffer a slowdown.  However, the slowdown is much
 smaller than that suffered by the autonomous drone in
-Figure~\ref{fig:avoid-best}.  Since the drone hardware and wireless
-network are identical in the two sets of experiments, the difference
-is due to the superior \ooda~loop of the human.  There is
-clearly ample headroom for improvement of the drone's \ooda~loop.
+Figure~\ref{fig:avoid-best}. Clearly, when it comes to avoidance, my drone system is not yet as good as a human pilot. This is in contrast to tracking~(Figures~\ref{fig:tracking-best} and \ref{fig:tracking-human}),
+where the human was bested by the autonomous drone.  I
+conjecture that at least part of this difference is attributable to
+the fact that the obstacle course is static, and hence subconscious
+pre-planning by the human helps in navigating it.  In contrast, the
+human is no better than the drone in anticipating random turns made by
+the target.  At higher speeds, raw reaction speed~(i.e., the
+\ooda~loop) is all that matters, and the autonomous drone proves to be
+better in this regard.
 
 \begin{figure}
 \centering
@@ -314,7 +312,7 @@ or best-case Orient+Decide$_d$, throughput is always in the 6--10~fps
 range.
 
 Figure~\ref{fig:avoidance-latency-throughput}(a) shows how benchmark
-score drops as latency is artificially added to the \ooda \\ loop.  Even
+score drops as latency is artificially added to the \ooda~loop.  Even
 250~ms of additional latency (i.e., a roughly 35--40\% increase from
 baseline) causes benchmark score to drop to nearly half its baseline
 value, for all values of $w$ and regardless of MiDaS model.  If 500~ms
@@ -334,7 +332,7 @@ further drop is observed when throughput is reduced to 1~fps.  For $w
 latency is not the sole determinant of task performance in an
 \ooda~loop --- throughput also matters.
 
-\subsection{Value of On-board Drone Intelligence}
+\section{Value of On-board Drone Intelligence}
 \label{sec:djiminipro}
 
 Edge computing allows use of compute resources that are far larger and heavier than could be carried by an ultralight drone.  In the context of AI,
@@ -415,3 +413,6 @@ unable to do general-purpose object detection even though it can
 detect people and vehicles.  It cannot detect the Robomaster target, and is hence
 unable to execute my tracking benchmark.  Edge offload could remedy
 that limitation, thereby increasing the versatility of the drone.
+
+\section{Summary}
+The parameterizable agility benchmarks presented in this chapter are the first reproducible method to compare autonomous drone performance in real flight. SteelEagle's scores, especially on the avoidance benchmark, show that there is vast room for improvement in the platform \ooda~loop. However, its good performance on tracking demonstrates the usefulness of the platform, outperforming the human pilot analog. The success of the DJI Mini 4 Pro on avoidance further suggests that onboard compute cannot be entirely ignored; for some tasks, it bests an edge computing approach. This motivates a system evolution of SteelEagle, which can not only adapt to varied drone hardware but also use available resources to its advantage. In the next chapter, I create a design sketch of such a system, and explore how to make it truly drone agnostic.

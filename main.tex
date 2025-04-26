@@ -35,7 +35,7 @@
 \usepackage{textcomp}
 \usepackage{csquotes}
 \usepackage{gensymb}
-\usepackage[backref,pageanchor=true,plainpages=false, pdfpagelabels, bookmarks,bookmarksnumbered,
+\usepackage[pageanchor=true,plainpages=false, pdfpagelabels, bookmarks,bookmarksnumbered,
 %pdfborder=0 0 0,  %removes outlines around hyper links in online display
 ]{hyperref}
 \usepackage{subfig}
@@ -67,9 +67,9 @@
 \pagestyle{empty}
 
 \title{ %% {\it \huge Thesis Proposal}\\
-{\bf Title Pending}}
+{Towards Fully-Autonomous Ultralight Drones}}
 \author{Mihir Bala}
-\date{XX 2025}
+\date{April 21, 2025}
 \Year{2025}
 \trnumber{}
 
@@ -80,8 +80,20 @@ Jeff Schneider \\
 Padmanabhan Pillai
 }
 
-\support{}
-\disclaimer{}
+\support{This material is based upon work supported by the
+U.S. Army Research Office and the U.S. Army Futures Command
+under Contract No. W519TC-23-C-0003 and by the National Science
+Foundation under grant number CNS-2106862. The content of the
+information does not necessarily reflect the position or the policy of
+the government and no official endorsement should be inferred. This
+work was done in the CMU Living Edge Lab, which is supported by
+Intel, Arm, Vodafone, Deutsche Telekom, CableLabs, Crown Castle,
+InterDigital, Seagate, Microsoft, the VMware University Research
+Fund, IAI, and the Conklin Kistler family fund.}
+\disclaimer{ Any opinions,
+findings, conclusions or recommendations expressed in this document
+are those of the author and do not necessarily reflect the view(s) of
+their employers or the above funding sources.}
 
 % copyright notice generated automatically from Year and author.
 % permission added if \permission{} given.
@@ -91,7 +103,7 @@ Padmanabhan Pillai
 \maketitle
 
 \begin{dedication}
-TBD
+For my dad.
 \end{dedication}
 
 \pagestyle{plain} % for toc, was empty
@@ -100,11 +112,10 @@ TBD
 %% into different files and input them into this file...
 
 \begin{abstract}
-To be written.
-\end{abstract}
+Autonomous drones have emerged as an exciting new technology which could revolutionize infrastructure inspection, military reconnaissance, and police surveillance. However, the vast majority of today’s platforms are heavy, costly, and difficult to operate. This restricts them from use in many mission settings, such as in densely populated environments, where government regulation forbids autonomous operation of heavy drones near people. Much of this weight comes from the onboard compute resources required for these drones to run the critical computer vision algorithms that provide situational awareness. In this dissertation, I show how autonomy can be induced on lightweight drones using edge computing, offloading high compute jobs to a network-proximal server. I demonstrate how this technique can lead to autonomous aircraft that fly much closer to the FAAs regulatory limits at acceptable performance cost. I also reveal a new operating system designed to unify the disparate landscape of drones under a single, easy-to-program API. I show how this can be leveraged to create heterogeneous collaborative drone swarms on commercial off-the-shelf hardware.\end{abstract}
 
 \begin{acknowledgments}
-To be written.
+I would like to thank my family, especially my mom and dad, for their continued support. I'd also like to thank my Pittsburgh friends: Bhavani Iyer, Brian Singer, Clement Fung, Abby Kroon Fung, Trevor Kann, Madeleine Howell Kann, Eric Zeng, Taro Tsuchiya, Joseph Reeves, Archana Iyer, Keane Lucas, Mark Dong, Alejandro Cuevas, and Amelia Cuevas; my college friends: Matthew Qemo, Evan Arora, Matthew Askar, Jack Dolan, Lindsay Tuttle, Alimul Miah, Jagjot Singh, Tony Muscat, James Sabella, Sneh Bhakta, and Kelton Bursch; my DC friends: Alhan Sayyed, Adaah Sayyed, Lavan Rajan, Kiki Sayyed, and Nirmal Maitra; and lastly, my high school friends: Liam Wilson, David Schindler, Patrick Turiano, Grant Keith, and Alex Sutherland. 
 \end{acknowledgments}
 
 
@@ -139,14 +150,18 @@ To be written.
 \input{intro}
 \chapter{Background and Related Work}
 \input{chapter2/chapter2}
-\chapter{Connecting COTS Drones to the Edge}
+\chapter{Towards Better Autonomous Drones}
 \input{chapter3/chapter3}
 \chapter{The SteelEagle Backend}
 \input{chapter4/chapter4}
-\chapter{A New Offload Device}
+\chapter{A Relay Device with Higher Throughput}
 \input{chapter5/chapter5}
 \chapter{Benchmarking the SteelEagle Pipeline}
 \input{chapter6/chapter6}
+\chapter{Drone Agnostic Flight Operations}
+\input{chapter7/chapter7}
+\chapter{Conclusion and Future Work}
+\input{chapter8/chapter8}
 
 %\appendix
 %\include{appendix}

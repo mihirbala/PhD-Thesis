@@ -90,7 +90,7 @@ As discussed in Section~\ref{sec:anatomy-drone-stream}, the drone's video stream
 \\[0.1cm] Mean: 31~$\pm$5~fps\; p1: 22~fps\\
 \end{captext}
 \vspace{-0.05in}
-{\small (b) Instant. Throughput (fps)}
+{\small (b) Throughput Jitter (fps)}
 \end{minipage}
 \caption{Observe$_{ab}$ Measurements}
 \label{fig:d2c-drone-histo}
@@ -99,9 +99,9 @@ As discussed in Section~\ref{sec:anatomy-drone-stream}, the drone's video stream
 
 Figure~\ref{fig:d2c-drone-histo} presents my measurements.  The
 latency distribution has a mean of 253~ms, with a standard deviation
-of 12~ms and a p99 of 277~ms.  Instantaneous throughput has a mean of
+of 12~ms and a p99 of 277~ms.  Throughput, with network jitter factored in, has a mean of
 31~fps, with a standard deviation of 5~fps and a p1 of 22~fps.  Due to
-streaming, throughput can be higher than the reciprocal of latency.
+pipelining, throughput can be higher than the reciprocal of latency.
 The short WiFi Observe$_{ab}$ segment is partly responsible for this observed variation.
 
 \subsection{Observe$_c$}
@@ -390,7 +390,7 @@ interpreted as the reciprocal of latency.
 \label{fig:ooda-scaling}
 \end{figure}
 
-\subsection{The Full \ooda~Loop}
+\section{The Full \ooda~Loop}
 \label{sec:e2e-discussion}
 
 Using the same notation as Figure~\ref{fig:nomenclature}, a visual
